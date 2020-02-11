@@ -1,12 +1,9 @@
 <?php
 if (PHP_SAPI == 'cli-server') {
-  // To help the built-in PHP dev server, check if the request was actually for
-  // something which should probably be served as a static file
-  $url  = parse_url($_SERVER['REQUEST_URI']);
-  $file = __DIR__ . $url['path'];
-  if(strpos($file, "/logs/") !== FALSE){
-    $_SERVER['SCRIPT_NAME'] = 'index.php';
+  if(strpos($_SERVER['SCRIPT_NAME'], '/tmp') !== FALSE){
+    return false;
   }
+  $_SERVER['SCRIPT_NAME'] = '/index.php';
 }
 
 //Configure session settings 
@@ -35,6 +32,12 @@ if(file_exists(__DIR__ . '/../src/conf/ranks.json')){
   $settings['settings']['statbus']['ranks'] = json_decode(file_get_contents(__DIR__ . '/../src/conf/ranks.json'), true);
 }
 
+if ($refresh = filter_input(INPUT_GET,'refresh', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH)){
+  if(password_verify($refresh, password_hash($settings['settings']['refresh_key'], PASSWORD_DEFAULT))){
+    $settings['settings']['twig']['auto_reload'] = TRUE;
+  }
+}
+
 $app = new \Slim\App($settings);
 
 // Set up dependencies
@@ -48,4 +51,5 @@ require __DIR__ . '/../src/routes.php';
 
 // Run app
 $app->run();
+
 

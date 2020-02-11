@@ -1,7 +1,7 @@
 {% extends "index.tpl"%}
 {% block content %}
-<h2>{{player.label|raw}} | 
-  <small class="text-muted"><a href="http://www.byond.com/members/{{player.ckey}}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> Byond</a> | <a href="https://tgstation13.org/tgdb/playerdetails.php?ckey={{player.ckey}}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> tgdb</a></small>
+<h2>{{player.label|raw}} 
+  <small class="text-muted"> | <a href="http://www.byond.com/members/{{player.ckey}}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> Byond</a> | <a href="https://tgstation13.org/tgdb/playerdetails.php?ckey={{player.ckey}}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> tgdb</a></small>
 </h2>
 <hr>
 <div class="row">
@@ -26,6 +26,9 @@
   </div>
   <div class="col">
     <ul class="list-group">
+      <a class="list-group-item" href="{{path_for('player.messages',{'ckey': player.ckey})}}">
+        <strong>Messages</strong> {{player.messageCount}}
+      </a>
       <li class="list-group-item list-group-item-{{player.standing.class}}">
         <strong>Account Standing</strong> {{player.standing.text}}<br>
         <ul class="list-unstyled">
@@ -175,40 +178,4 @@
     </div>
   </div>
 </div>
-<hr>
-<div class="card mb-4">
-  {% if player.messages|length > 3 %}
-    <h3 class="card-header" data-target="#msglist" data-toggle="collapse">Messages <small>({{player.messages|length}})</small></h3>
-    <div class="card-body collapse" id="msglist">
-  {% else %}
-    <h3 class="card-header">Messages</h3>
-    <div class="card-body" id="msglist">
-  {% endif %}
-    {% for message in player.messages %}
-      {% include 'messages/html/single.html' %}
-    {% endfor %}
-  </div>
-</div>
-
-{% endblock %}
-{% block js %}
-<script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
-<script>
-var data = {{player.role_time|raw}};
-var jobs = unpack(data,'job');
-var minutes = unpack(data,'minutes');
-var trace1 = {
-  x: jobs,
-  y: minutes,
-  type: 'bar',
-  name: 'Minutes'
-}
-
-var layout = {
-  title: 'Role Time (Minutes)',
-};
-var data = [trace1]
-Plotly.newPlot('roletime',data, layout)
-</script>
 {% endblock %}

@@ -21,8 +21,8 @@ class Controller {
 
   public function __construct(ContainerInterface $container) {
     $this->container = $container;
-    $this->view = $this->container->get('view');
     $this->DB = $this->container->get('DB');
+    $this->view = $this->container->get('view');
     $this->router = $this->container->get('router');
     $this->request = $this->container->get('request');
     $this->response = $this->container->get('response');
@@ -33,6 +33,13 @@ class Controller {
     ];
     $this->view->getEnvironment()->addGlobal('ogdata', $this->ogdata);
     $this->view->getEnvironment()->addGlobal('settings', $this->container->get('settings')['statbus']);
+    if(!$this->DB){
+      $error = $this->view->render($this->response, 'base/error.tpl',[
+        'message' => "Unable to establish a connection to the statistics database.",
+        'code' => 500
+      ]);
+      die($this->response->getBody());
+    }
   }
 
   public function getFullURL($path){
@@ -40,4 +47,3 @@ class Controller {
     return $base.$path;
   }
 }
-

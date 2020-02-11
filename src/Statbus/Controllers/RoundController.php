@@ -32,6 +32,7 @@ class RoundController Extends Controller {
   public function __construct(ContainerInterface $container) {
     parent::__construct($container);
     $this->pages = ceil($this->DB->cell("SELECT count(tbl_round.id) FROM tbl_round") / $this->per_page);
+    $this->sc = new StatController($this->container);
 
     $this->roundModel = new Round($this->container->get('settings')['statbus']);
 
@@ -89,8 +90,8 @@ class RoundController Extends Controller {
       }
       return $round->stat;
     }
-    $round->stats = (new StatController($this->DB))->getStatsForRound($round->id);
-    $round->data = (new StatController($this->DB))->getStatsForRound($round->id,[
+    $round->stats = $this->sc->getStatsForRound($round->id);
+    $round->data = $this->sc->getStatsForRound($round->id,[
       'nuclear_challenge_mode',
       'testmerged_prs',
       'newscaster_stories'
@@ -107,7 +108,7 @@ class RoundController Extends Controller {
 
   public function stat(object $round, string $stat, $response){
     $stat = filter_var($stat, FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
-    $round->stat = (new StatController($this->DB))->getRoundStat($round->id, $stat);
+    $round->stat = (new StatController($this->container))->getRoundStat($round->id, $stat);
     $url = parent::getFullURL($this->router->pathFor('round.single',[
       'id'   =>$round->id,
       'stat' =>$stat
@@ -357,5 +358,67 @@ class RoundController Extends Controller {
       'breadcrumbs' => $this->breadcrumbs,
       'ckey'        => $ckey
     ]);
+  }
+
+  public function getActiveRounds($request, $response, $args){
+    if(!$this->userCanAccessTGDB){
+      return false;
+    }
+    $rounds = $this->DB->run("SELECT DISTINCT(*) FROM tbl_round WHERE `shutdown_datetime` IS NULL LIMIT 0, 4 ORDER BY id DESC");
+    return $request->withJson($rounds);
+  }
+
+  public function winLoss($request, $response, $args){
+    $p = $request->getQueryParams();
+    $start = null;
+    $end = null;
+    if(isset($p['start']) && isset($p['end'])){
+      $start = filter_var($p['start'], FILTER_SANITIZE_STRING, 
+       FILTER_FLAG_STRIP_HIGH);
+      $end = filter_var($p['end'], FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
+    }
+    $minmax = $this->DB->row("SELECT 
+      min(STR_TO_DATE(R.initialize_datetime, '%Y-%m-%d')) AS min,
+      max(STR_TO_DATE(R.shutdown_datetime, '%Y-%m-%d')) AS max
+      FROM tbl_round AS R
+      WHERE R.shutdown_datetime != '0000-00-00 00:00:00'
+      AND R.initialize_datetime != '0000-00-00 00:00:00'");
+    if(!$start) {
+      $start = $minmax->min;
+      $end = $minmax->max;
+    } else {
+      $startDate = new \dateTime($start);
+      $start = $startDate->format('Y-m-d');
+      $endDate = new \dateTime($end);
+      $end = $endDate->format('Y-m-d');
+    }
+    $data = $this->getWinLossRatios($start, $end);
+    return $this->view->render($response, 'info/winloss.tpl',[
+        'modes'  => $data,
+        'start'  => $start,
+        'end'    => $end,
+        'min'    => $minmax->min,
+        'max'    => $minmax->max
+      ]);
+  }
+
+  public function getWinLossRatios($start = null, $end = null){
+    $data = $this->DB->run("SELECT count(tbl_round.id) AS rounds,
+        tbl_round.game_mode,
+        tbl_round.game_mode_result,
+        FLOOR(AVG(TIMESTAMPDIFF(MINUTE, tbl_round.start_datetime, tbl_round.end_datetime))) AS duration
+        FROM tbl_round
+        WHERE tbl_round.game_mode IS NOT NULL
+        AND tbl_round.game_mode != 'undefined'
+        AND tbl_round.game_mode_result IS NOT NULL
+        AND tbl_round.game_mode_result != 'undefined'
+        AND tbl_round.initialize_datetime BETWEEN ? AND ?
+        AND tbl_round.shutdown_datetime IS NOT NULL
+        GROUP BY tbl_round.game_mode, tbl_round.game_mode_result
+        ORDER BY tbl_round.game_mode ASC, rounds DESC;", $start, $end);
+      usort($data, function($a, $b){
+        return strcmp($a->game_mode, $b->game_mode);
+      });
+      return $data;
   }
 }

@@ -45,10 +45,18 @@ $app->group('', function () {
   //My role time
   $this->get('/me/roles', \Statbus\Controllers\PlayerController::class . ':getPlayerRoleTime')->setName('me.roles');
 
+  //My notes/messages
+  $this->get('/me/messages[/page/{page}]', \Statbus\Controllers\PlayerController::class . ':getMyMessages')->setName('me.messages');
+
   //My rounds
   $this->get('/me/rounds[/page/{page}]', \Statbus\Controllers\RoundController::class . ':getMyRounds')->setName('me.rounds');
 });
 
+//Public player pages
+$app->group('', function () {
+  //CHEEVOS
+  $this->get('/player/{ckey:[a-z0-9]+}', \Statbus\Controllers\PlayerController::class . ':getPlayerPublic')->setName('player.public');
+});
 //Rounds
 $app->group('', function () {
 
@@ -57,7 +65,7 @@ $app->group('', function () {
 
   //Station Names
   $this->get('/rounds/stations', \Statbus\Controllers\RoundController::class . ':stationNames')->setName('round.stations');
-  
+
   //Map view
   $this->get('/rounds/{id:[0-9]+}/map', \Statbus\Controllers\RoundController::class . ':mapView')->setName('round.map');
 
@@ -76,6 +84,17 @@ $app->group('', function () {
 
 //Stat Pages
 $app->group('', function () {
+
+  //List Stats
+  $this->get('/stats', \Statbus\Controllers\StatController::class . ':list')->setName('stat.list');
+
+  //Collated data
+  $this->get('/stats/{stat}[/{version}]', \Statbus\Controllers\StatController::class . ':collate')->setName('stat.collate');
+
+  //Collated data charted
+  $this->get('/stats/{stat}/chart', \Statbus\Controllers\StatController::class . ':chart')->setName('stat.chart');
+
+  //Round Listing
   $this->get('/stats/{stat}/rounds[/page/{page}]', \Statbus\Controllers\RoundController::class . ':getRoundsWithStat')->setName('stat.rounds');
 });
 
@@ -99,13 +118,20 @@ $app->group('', function () {
 $app->group('', function () {
 
   //Admin Activity
-  $this->get('/info/admins[/wiki]', \Statbus\Controllers\StatbusController::class . ':DoAdminsPlay')->setName('admin_connections');
+  $this->get('/info/admins', \Statbus\Controllers\StatbusController::class . ':DoAdminsPlay')->setName('admin_connections');
 
   //Admin Activity
   $this->get('/info/adminlogs[/page/{page}]', \Statbus\Controllers\StatbusController::class . ':adminLogs')->setName('admin_logs');
 
   //Population Data
   $this->get('/info/population', \Statbus\Controllers\StatbusController::class . ':popGraph')->setName('population');
+
+  //Playtime graphs
+  $this->get('/info/playtime', \Statbus\Controllers\StatbusController::class . ':last30Days')->setName('playtime');
+
+
+  //Win-Loss Ratios
+  $this->get('/info/winloss', \Statbus\Controllers\RoundController::class . ':winLoss')->setName('winloss');
 
 
 });
@@ -121,7 +147,8 @@ $app->group('', function () {
 
   //Delete Book (admin only)
   $this->post('/library/{id:[0-9]+}/delete', \Statbus\Controllers\LibraryController::class . ':deleteBook')->setName('library.delete');
-});
+
+})->add(new \Statbus\Middleware\UserGuard($container, 0));
 
 //Polls
 $app->group('', function () {
@@ -155,6 +182,9 @@ $app->group('', function () {
   //Player rounds
   $this->get('/tgdb/player/{ckey:[a-z0-9]+}/rounds[/page/{page}]', \Statbus\Controllers\RoundController::class . ':getPlayerRounds')->setName('player.rounds');
 
+  //Player messages
+  $this->get('/tgdb/player/{ckey:[a-z0-9]+}/messages[/page/{page}]', \Statbus\Controllers\PlayerController::class . ':getPlayerMessages')->setName('player.messages');
+
   //Typeahead
   $this->get('/tgdb/suggest', \Statbus\Controllers\PlayerController::class . ':findCkeys')->setName('player.suggest');
 
@@ -166,4 +196,14 @@ $app->group('', function () {
 
   $this->post('/tgdb/feedback', \Statbus\Controllers\UserController::class . ':addFeedback')->setName('admin.feedback');
 
-})->add(new \Statbus\Middleware\UserGuard($container));
+  //Tickets!
+  $this->get('/tgdb/tickets[/page/{page}]', \Statbus\Controllers\TicketController::class . ':index')->setName('ticket.index');
+
+  $this->get('/tgdb/tickets/{round}/{ticket}', \Statbus\Controllers\TicketController::class . ':single')->setName('ticket.single');
+
+  //Character Name Search
+  $this->get('/tgdb/name2ckey', \Statbus\Controllers\PlayerController::class . ':name2ckey')->setName('name2ckey');
+
+  $this->post('/tgdb/name2ckey', \Statbus\Controllers\PlayerController::class . ':name2ckey')->setName('name2ckey');
+
+})->add(new \Statbus\Middleware\UserGuard($container, 2));

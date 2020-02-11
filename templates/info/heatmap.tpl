@@ -5,58 +5,45 @@
 <div class="alert alert-info">This data was loaded from a cached file</div>
 {% endif %}
 
-<div id="population" style="height: 512px;"></div>
-
+<div id="population"></div>
+<p class="lead">
+  This chart shows the average number of players, admins, and completed rounds, by hour, across all servers, for the last 30 days.
+</p>
 {% endblock %}
 
 {% block js %}
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
-Plotly.d3.json("/tmp/db/{{hash}}",function(data){
-    console.log(data);
-    dates   = unpack(data.data,'date')
-    hours   = unpack(data.data,'hour')
-    servers = unpack(data.data,'server_port')
-    players = unpack(data.data,'players')
-    admins  = unpack(data.data,'admins')
-    renderGraph()
-})
-function renderGraph(){
-    var trace1 = {
-      x: dates,
-      y: players,
-      type: 'line',
-      transforms: [{
-        type: 'groupby',
-        groups: servers,
-      }],
-      name: 'Players'
+var json = {{data|raw}}
+var options = {
+  chart: {
+    type: 'line',
+    height: 512,
+    animations: {
+      enabled: false
     }
-
-    var trace2 = {
-      x: dates,
-      y: admins,
-      type: 'line',
-      transforms: [{
-        type: 'groupby',
-        groups: servers
-      }],
-      name: 'Admins'
+  },
+  series: [{
+    name: 'Players',
+    data: unpack(json, 'players')
+  },{
+    name: 'Admins',
+    data: unpack(json, 'admins')
+  },{
+    name: 'Rounds',
+    data: unpack(json, 'rounds')
+  }],
+  xaxis: {
+    type: "datetime",
+    categories: unpack(json, 'date'),
+  },
+  tooltip: {
+    x: {
+      format: 'dd MMM yyyy HH:00'
     }
-
-    var layout = {
-      title: 'Server Population',
-      xaxis: {
-        title: 'Date',
-        type: 'date'
-      },
-      yaxis: {
-        title: 'Population'
-      }
-    }
-
-    var data = [trace1, trace2]
-    Plotly.plot('population', data, layout, {responsive: true})
+  }
 }
+var chart = new ApexCharts(document.querySelector("#population"), options);
+chart.render();
 </script>
 {% endblock %}

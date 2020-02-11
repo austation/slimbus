@@ -32,6 +32,50 @@ class PlayerController Extends Controller {
     ]);
   }
 
+  public function getPlayerPublic($request, $response, $args) {
+    $player = $this->getPlayerByCkey(filter_var($args['ckey'], FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH),TRUE);
+    if (!$player->ckey) {
+      return $this->view->render($this->response, 'base/error.tpl', [
+        'message' => "Ckey not found",
+        'code'    => 404,
+      ]);
+    }
+    $player->achievements = (new AchievementController($this->container))->getPlayerAchievements($player->ckey);
+    return $this->view->render($response, 'player/public.tpl',[
+      'player' => $player
+    ]);
+  }
+
+  public function getPlayerByCkey($ckey, $public = false){
+    if($public){
+      return $this->DB->row("SELECT tbl_player.ckey
+        FROM tbl_player
+        WHERE tbl_player.ckey = ?", $ckey);
+    }
+    return $this->DB->row("SELECT tbl_player.ckey,
+      tbl_player.firstseen,
+      tbl_player.firstseen_round_id,
+      tbl_player.lastseen,
+      tbl_player.lastseen_round_id,
+      tbl_player.ip,
+      tbl_player.computerid,
+      tbl_admin.rank,
+      tbl_player.accountjoindate,
+      tbl_player.flags,
+      count(DISTINCT tbl_connection_log.id) AS connections,
+      G.minutes as ghost,
+      L.minutes as living,
+      floor((G.minutes + L.minutes) / 60) AS hours,
+      DATEDIFF(CURDATE(),tbl_player.lastseen) AS days
+      FROM tbl_player
+      LEFT JOIN tbl_connection_log ON tbl_connection_log.ckey = tbl_player.ckey
+      LEFT JOIN tbl_role_time AS G ON G.ckey = tbl_player.ckey AND G.job = 'Ghost'
+      LEFT JOIN tbl_role_time AS L ON L.ckey = tbl_player.ckey AND L.job = 'Living'
+      LEFT JOIN tbl_admin ON tbl_player.ckey = tbl_admin.ckey
+      WHERE tbl_player.ckey = ?", $ckey);
+  }
+
+
   public function getPlayerRoleTime($request, $response, $args) {
     if(isset($args['ckey'])){
     $ckey = filter_var($args['ckey'], FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
@@ -81,31 +125,6 @@ class PlayerController Extends Controller {
       'max'    => $minmax->max
     ]);
   }
-
-  public function getPlayerByCkey($ckey){
-    return $this->DB->row("SELECT tbl_player.ckey,
-      tbl_player.firstseen,
-      tbl_player.firstseen_round_id,
-      tbl_player.lastseen,
-      tbl_player.lastseen_round_id,
-      tbl_player.ip,
-      tbl_player.computerid,
-      tbl_admin.rank,
-      tbl_player.accountjoindate,
-      tbl_player.flags,
-      count(DISTINCT tbl_connection_log.id) AS connections,
-      G.minutes as ghost,
-      L.minutes as living,
-      floor((G.minutes + L.minutes) / 60) AS hours,
-      DATEDIFF(CURDATE(),tbl_player.lastseen) AS days
-      FROM tbl_player
-      LEFT JOIN tbl_connection_log ON tbl_connection_log.ckey = tbl_player.ckey
-      LEFT JOIN tbl_role_time AS G ON G.ckey = tbl_player.ckey AND G.job = 'Ghost'
-      LEFT JOIN tbl_role_time AS L ON L.ckey = tbl_player.ckey AND L.job = 'Living'
-      LEFT JOIN tbl_admin ON tbl_player.ckey = tbl_admin.ckey
-      WHERE tbl_player.ckey = ?", $ckey);
-  }
-
 
   public function getPlayerByIP(int $IP){
     return $this->DB->row("SELECT tbl_player.ckey,
@@ -212,15 +231,21 @@ class PlayerController Extends Controller {
       AND tbl_round.shutdown_datetime IS NOT NULL", $ckey);
   }
 
+  public function countMessages($ckey){
+    return $this->DB->cell("SELECT count(M.id) FROM tbl_messages M
+      WHERE M.deleted = 0
+      AND (M.expire_timestamp > NOW() OR M.expire_timestamp IS NULL)
+      AND M.targetckey = ?", $ckey);
+  }
+
   public function gatherAdditionalData(&$player){
-    // $player->role_time = $this->getRoleData($player->ckey);
-    $player->messages = (new MessageController($this->container))->getMessagesForCkey($player->ckey, TRUE);
     $player->names = $this->getPlayerNames($player->ckey);
     $player->standing = (new BanController($this->container))->getPlayerStanding($player->ckey);
     $player->ips = $this->getIPs('ckey', $player->ckey);
     $player->cids = $this->getCIDs('ckey', $player->ckey);
     $player->alts = $this->findAlts($player->ckey);
     $player->roundCount = $this->countRounds($player->ckey);
+    $player->messageCount = $this->countMessages($player->ckey);
     return $player;
   }
 
@@ -238,5 +263,76 @@ class PlayerController Extends Controller {
         LIMIT 0, 15", '%'.$this->DB->escapeLikeValue($ckey).'%');
       return $response->withJson($results);
     }
+  }
+
+  public function getPlayerMessages($request, $response, $args) {
+    $page = 1;
+    if(isset($args['page'])) {
+      $page = filter_var($args['page'], FILTER_VALIDATE_INT);
+    }
+    if(isset($args['ckey'])){
+    $ckey = filter_var($args['ckey'], FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
+    }
+    $player = $this->getPlayerByCkey($ckey);
+    if (!$player->ckey) {
+      return $this->view->render($this->response, 'base/error.tpl', [
+        'message' => "Ckey not found",
+        'code'    => 404,
+      ]);
+    }
+    $mc = new MessageController($this->container);
+    $messages = $mc->getMessagesForCkey($player->ckey, FALSE, $page);
+    $breadcrumbs[$player->ckey] = $this->router->pathFor('player.single',['ckey'=>$player->ckey]);
+    $breadcrumbs["Messages"] = $this->router->pathFor('player.messages',['ckey'=>$player->ckey]);
+    return $this->view->render($response, 'messages/player.tpl',[
+      'player' => $player,
+      'messages'  => $messages,
+      'message' => $mc,
+      'breadcrumbs' => $breadcrumbs
+    ]);
+  }
+
+  public function getMyMessages($request, $response, $args) {
+    $page = 1;
+    if(isset($args['page'])) {
+      $page = filter_var($args['page'], FILTER_VALIDATE_INT);
+    }
+    $player = $this->getPlayerByCkey($this->container->user->ckey);
+    if (!$player->ckey) {
+      return $this->view->render($this->response, 'base/error.tpl', [
+        'message' => "Ckey not found",
+        'code'    => 404,
+      ]);
+    }
+    $mc = new MessageController($this->container);
+    $messages = $mc->getMessagesForCkey($player->ckey, TRUE, $page);
+    $mc->url = $this->router->pathFor('me.messages');
+    $breadcrumbs[$player->ckey] = $this->router->pathFor('me');
+    $breadcrumbs["Messages"] = $this->router->pathFor('me.messages');
+    return $this->view->render($response, 'messages/player.tpl',[
+      'player' => $player,
+      'messages'  => $messages,
+      'message' => $mc,
+      'breadcrumbs' => $breadcrumbs
+    ]);
+  }
+
+  public function name2ckey($request, $response, $args){
+    if($request->isPost()){
+      $name = filter_var($request->getParam('name'), FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
+      if ($name){
+        $results = $this->DB->run("SELECT count(D.id) AS count,
+          D.byondkey,
+          D.name
+          FROM tbl_death D
+          WHERE D.name LIKE ?
+          GROUP BY `name`
+          LIMIT 0, 15", '%'.$this->DB->escapeLikeValue($name).'%');
+      }
+    }
+    return $this->view->render($response, 'tgdb/name2ckey.tpl',[
+      'results' => $results,
+      'name' => $name
+    ]);
   }
 }
