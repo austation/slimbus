@@ -7,7 +7,7 @@
   </div>
   <div class="card-body">{{message.text|raw}}</div>
   <div class="card-footer d-flex justify-content-between">
-    <span>During <a href="{{path_for('round.single',{'id': message.round})}}"><i class="fas fa-circle"></i> {{message.round}}</a> on {{message.server}}</span>
+    <span>During <a href="{{path_for('round.single',{'id': message.round})}}"><i class="fas fa-circle"></i> {{message.round}}</a> on {{message.server_name}}</span>
     {% if 'Note' == message.type %}
     <span>Severity:
     <span class="badge badge-{{message.severity_class}}" data-toggle="tooltip" title="{{message.severity}} Severity {{message.type}}">{{message.severity}}</span>
