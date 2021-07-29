@@ -6,6 +6,8 @@ src/conf/servers.json
 src/conf/ranks.json
 src/conf/alert.html*
 src/conf/candidates.json
-composer.lock
+src/conf/jobs.json
 /.db
 /templates/tracker.html
+/.well-known/
+**/web.config
