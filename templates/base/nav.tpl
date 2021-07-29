@@ -62,7 +62,7 @@
         {% endif %}
     </div>
     {% if user.canAccessTGDB %}
-      <form class="form-inline">
+      <form class="form-inline" autocomplete="off">
         <div class="typeahead__container">
           <input class="form-control mr-sm-2 form-control-sm js-typeahead" type="search" placeholder="ckey" aria-label="Search" id="tgdbsearch">
         </div>

@@ -34,11 +34,11 @@ class TicketController extends Controller {
         r.rank as r_rank,
         s.rank as s_rank,
         COUNT(B.id) AS replies,
-        (SELECT `action` FROM ss13ticket WHERE t.ticket = ticket AND t.round_id = round_id ORDER BY id DESC LIMIT 1) as `status`
-      FROM ss13ticket t
-      LEFT JOIN ss13admin AS r ON r.ckey = t.recipient
-      LEFT JOIN ss13admin AS s ON s.ckey = t.sender
-      JOIN ss13ticket AS B ON B.ticket = t.ticket AND B.round_id = t.round_id
+        (SELECT `action` FROM tbl_ticket WHERE t.ticket = ticket AND t.round_id = round_id ORDER BY id DESC LIMIT 1) as `status`
+      FROM tbl_ticket t
+      LEFT JOIN tbl_admin AS r ON r.ckey = t.recipient
+      LEFT JOIN tbl_admin AS s ON s.ckey = t.sender
+      JOIN tbl_ticket AS B ON B.ticket = t.ticket AND B.round_id = t.round_id
       WHERE t.action = 'Ticket Opened' 
       GROUP BY t.id
       ORDER BY `timestamp` DESC
@@ -107,9 +107,7 @@ class TicketController extends Controller {
     return $this->view->render($this->response, 'tickets/index.tpl',[
         'tickets' => $this->getActiveTickets(),
         'ticket' => $this,
-      ]);
-  }
-        'wide' => TRUE
+	    'wide' => TRUE
       ]);
   }
 
