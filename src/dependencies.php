@@ -64,7 +64,7 @@ $container['view'] = function ($container) {
   $view->getEnvironment()->addGlobal('statbus', $container->get('settings')['statbus']);
 
   // Setting timezone
-  $view->getEnvironment()->setTimezone("Asia/Yakutsk");
+  $view->getExtension(\Twig\Extension\CoreExtension::class)->setTimezone("Asia/Yakutsk");
 
   //Alert HTML if set
   if(is_file(__DIR__."/conf/alert.html")){
