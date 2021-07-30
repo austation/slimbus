@@ -63,6 +63,9 @@ $container['view'] = function ($container) {
   //Global statbus settings
   $view->getEnvironment()->addGlobal('statbus', $container->get('settings')['statbus']);
 
+  // Setting timezone
+  $view->getEnvironment()->setTimezone("Asia/Yakutsk");
+
   //Alert HTML if set
   if(is_file(__DIR__."/conf/alert.html")){
     $alert = file_get_contents(__DIR__."/conf/alert.html");
