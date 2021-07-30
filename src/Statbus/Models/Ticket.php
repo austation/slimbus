@@ -46,6 +46,9 @@ class Ticket {
     switch ($ticket->action) {
       case 'Reply':
       default:
+        if (null === $ticket->recipient->ckey){
+          $ticket->recipient = FALSE;
+        }
         $ticket->class = "secondary";
         $ticket->action_label = "Reply from ";
       break;
