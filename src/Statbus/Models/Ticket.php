@@ -27,7 +27,7 @@ class Ticket {
     $ticket->recipient->ckey = $ticket->recipient_ckey;
     $ticket->recipient->rank = $ticket->r_rank;
     $ticket->recipient = $this->pm->parsePlayer($ticket->recipient);
-    
+
     if(($ticket->sender->ckey && $ticket->recipient->ckey) && 'Ticket Opened' === $ticket->action){
       $ticket->bwoink = TRUE;
     }
@@ -41,7 +41,7 @@ class Ticket {
     $ticket->type = 'text';
     $ticket->message = strip_tags($ticket->message);
     $ticket->server_data = (object) $this->settings['servers'][array_search($ticket->port, array_column($this->settings['servers'], 'port'))];
-    
+
     //This is for parsing individual ticket views
     switch ($ticket->action) {
       case 'Reply':
@@ -56,6 +56,15 @@ class Ticket {
           $ticket->class = "primary";
         }
         $ticket->action_label = "Ticket Opened by";
+      break;
+
+      case 'Claimed':
+        $ticket->class = "info";
+        $ticket->action_label = "Claimed by ";
+        $ticket->recipient = FALSE;
+        $ticket->message = FALSE;
+        $ticket->icon = "user";
+        $ticket->type = "action";
       break;
 
       case 'Resolved':
@@ -127,6 +136,11 @@ class Ticket {
         $ticket->icon = "reply";
       break;
 
+      case 'Claimed':
+        $ticket->status_class = "info";
+        $ticket->icon = "user";
+      break;
+
       case 'Resolved':
         $ticket->icon = 'thumbs-up';
         $ticket->status_class = 'success';
@@ -163,7 +177,7 @@ class Ticket {
     }
 
     $this->lastDate = $ticket->timestamp;
-    
+
     return $ticket;
   }
 }
