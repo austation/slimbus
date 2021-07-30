@@ -6,7 +6,10 @@ if (PHP_SAPI == 'cli-server') {
   $_SERVER['SCRIPT_NAME'] = '/index.php';
 }
 
-//Configure session settings 
+// Set the timezone
+ini_set("date.timezone", "Asia/Yakutsk");
+
+//Configure session settings
 require __DIR__ . '/../src/session.php';
 
 //Load up on libs
@@ -51,5 +54,3 @@ require __DIR__ . '/../src/routes.php';
 
 // Run app
 $app->run();
-
-
