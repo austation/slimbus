@@ -24,7 +24,11 @@ class UserController Extends Controller {
     if(isset($_SESSION['sb']['byond_ckey']) && $this->settings['statbus']['auth']['remote_auth']){
       $this->user = $this->PC->getPlayerByCkey($_SESSION['sb']['byond_ckey']);
     } elseif ($this->settings['statbus']['ip_auth']){
-      $this->user = $this->PC->getPlayerByIP(ip2long($_SERVER['REMOTE_ADDR']));
+      if(isset($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        $this->user = $this->PC->getPlayerByIP(ip2long($_SERVER['HTTP_CF_CONNECTING_IP']));
+      } else {
+        $this->user = $this->PC->getPlayerByIP(ip2long($_SERVER['REMOTE_ADDR']));
+      }
       if($this->user->days > $this->settings['statbus']['ip_auth_days']){
         //Skip admin rank verification. 
         $this->skipRankVerify = true;
@@ -68,7 +72,7 @@ class UserController Extends Controller {
   }
 
   public function getCkey(){
-    return $this->user->ckey;
+        return $this->user->ckey;
   }
   
   public function canAccessTGDB(){
