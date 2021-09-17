@@ -76,7 +76,7 @@ class StatController Extends Controller {
     $minmax = $this->DB->row("SELECT 
       min(STR_TO_DATE(R.datetime, '%Y-%m-%d')) AS min,
       max(STR_TO_DATE(R.datetime, '%Y-%m-%d')) AS max
-      FROM ss13feedback AS R
+      FROM feedback AS R
       WHERE R.key_name = ? AND R.version = ?;", $stat, $version);
     if(!$start) {
       $start = $minmax->min;
@@ -87,7 +87,7 @@ class StatController Extends Controller {
       $endDate = new \dateTime($end);
       $end = $endDate->format('Y-m-d');
     }
-    $stat = $this->DB->run("SELECT R.key_name, R.key_type, R.json, R.round_id, R.version, R.datetime FROM ss13feedback R WHERE R.key_name = ? AND R.version = ? AND R.datetime BETWEEN ? AND ? ORDER BY R.datetime ASC", $stat, $version, $start, $end);
+    $stat = $this->DB->run("SELECT R.key_name, R.key_type, R.json, R.round_id, R.version, R.datetime FROM feedback R WHERE R.key_name = ? AND R.version = ? AND R.datetime BETWEEN ? AND ? ORDER BY R.datetime ASC", $stat, $version, $start, $end);
     $stat = $this->statModel->parseStat($stat, TRUE);
     return $this->view->render($response, 'stats/collated.tpl',[
       'stat'  => $stat,
