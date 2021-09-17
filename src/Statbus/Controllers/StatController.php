@@ -51,7 +51,7 @@ class StatController Extends Controller {
   }
 
   public function list($request, $response, $args){
-    $stats = $this->DB->run("SELECT R.key_name, R.key_type, R.version, count(R.round_id) AS rounds FROM ss13feedback R GROUP BY R.key_name, R.version ORDER BY R.key_name ASC;");
+    $stats = $this->DB->run("SELECT R.key_name, R.key_type, R.version, count(R.round_id) AS rounds FROM feedback R GROUP BY R.key_name, R.version ORDER BY R.key_name ASC;");
     return $this->view->render($response, 'stats/listing.tpl',[
       'stats' => $stats
     ]);
