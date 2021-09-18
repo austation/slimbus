@@ -3,7 +3,7 @@
 {% block content %}
 {% include('rounds/html/header.tpl') %}
 
-{% set gameLogs = ['game.txt','game.html','attack.txt','attack.html'] %}
+{% set gameLogs = ['game.log','game.html','attack.log','attack.html'] %}
 <h3>Available log files <a class="btn btn-primary btn-sm" href="{{round.remote_logs_dir}}" target="_blank" rel="noopener noreferrer">Original <i class="fas fa-external-link-alt"></i></a></h3>
 <hr>
 

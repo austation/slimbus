@@ -68,25 +68,25 @@ class LogsController Extends Controller {
   public function getFile($file, $format = false){
     if (!in_array($file, [
       'atmos.html',
-      // 'attack.txt',
+      // 'attack.log',
       'cargo.html',
-      // 'game.txt',
+      // 'game.log',
       'gravity.html',
       'hallucinations.html',
-      'initialize.txt',
-      'manifest.txt',
+      'initialize.log',
+      'manifest.log',
       'newscaster.json',
-      'pda.txt',
+      'pda.log',
       'portals.html',
       'profiler.json',
-      'qdel.txt',
+      'qdel.log',
       'radiation.html',
       'records.html',
       'research.html',
       'round_end_data.json',
-      'runtime.txt',
+      'runtime.log',
       'singulo.html',
-      'telecomms.txt',
+      'telecomms.log',
       'supermatter.html',
       'wires.html',
     ])) {
@@ -138,7 +138,7 @@ class LogsController Extends Controller {
         $this->genericLogParse('hallucinations.html');
       break;
 
-      case 'manifest.txt':
+      case 'manifest.log':
         $this->parseManifest();
       break;
 
@@ -146,7 +146,7 @@ class LogsController Extends Controller {
         $this->parseNewscaster();
       break;
 
-      case 'pda.txt':
+      case 'pda.log':
         $this->parsePDA();
       break;
 
@@ -328,7 +328,7 @@ class LogsController Extends Controller {
 
   public function processGameLogs(){
     $i = 0;
-    $handle = fopen("phar://".$this->zip."/game.txt", "r");
+    $handle = fopen("phar://".$this->zip."/game.log", "r");
     if ($handle) {
         while (($line = fgets($handle)) !== false) {
           $tmp = [];
@@ -378,7 +378,7 @@ class LogsController Extends Controller {
       fclose($handle);
     }
 
-    $handle = fopen("phar://".$this->zip."/attack.txt", "r");
+    $handle = fopen("phar://".$this->zip."/attack.log", "r");
     if ($handle) {
         while (($line = fgets($handle)) !== false) {
           $tmp = [];

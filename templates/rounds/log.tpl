@@ -3,7 +3,7 @@
 {% block pagetitle %}Logs - Round #{{round.id}}{% endblock %}
 {% block content %}
 {% include('rounds/html/header.tpl') %}
-{% set gameLogs = ['game.txt','game.html','attack.txt','attack.html'] %}
+{% set gameLogs = ['game.log','game.html','attack.log','attack.html'] %}
 <h3>Viewing <code>{{filename}}</code>
 <span class="float-right">
   {% if format == 'raw' %}

@@ -234,7 +234,7 @@ class RoundController Extends Controller {
   }
 
   public function getGameLogs($request, $response, $args){
-    $file = 'game.txt';
+    $file = 'game.log';
     $round = $this->getRound($args['id']);
     if(isset($args['page'])) {
       $this->page = filter_var($args['page'], FILTER_VALIDATE_INT);

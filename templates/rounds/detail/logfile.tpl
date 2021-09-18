@@ -2,10 +2,10 @@
 {% block content%}
 {% include('rounds/html/basic.tpl') %}
 
-{% if round.extraData == "manifest.txt" %}
+{% if round.extraData == "manifest.log" %}
   {% set crew = round.logs %}
   {% include "rounds/detail/manifest.tpl" with crew %}
-{% elseif round.extraData == "pda.txt" %}
+{% elseif round.extraData == "pda.log" %}
   {% include "rounds/detail/pda.tpl" %}
 {% elseif round.extraData == "newscaster.json" %}
   {% include "rounds/detail/newscaster.tpl" %}

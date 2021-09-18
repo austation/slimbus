@@ -120,7 +120,7 @@
           </tbody>
         </table>
         <p>
-        <small class="text-muted">Times being the number of times this ckey was found attached to this character name in a parsed manifest.txt. <strong>THIS IS PRELIMINARY</strong></small>
+        <small class="text-muted">Times being the number of times this ckey was found attached to this character name in a parsed manifest.log. <strong>THIS IS PRELIMINARY</strong></small>
         </p>
         {% endif %}
         <strong>Deaths Table</strong>

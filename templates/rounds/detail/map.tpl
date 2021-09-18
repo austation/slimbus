@@ -129,7 +129,7 @@
     })
 
   var pdalog = L.layerGroup();
-      fetch('{{app.url}}round.php?round={{round.id}}&file=pda.txt&json=true')
+      fetch('{{app.url}}round.php?round={{round.id}}&file=pda.log&json=true')
         .then(function(response) {
           return response.json();
         })
