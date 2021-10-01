@@ -193,6 +193,7 @@ class RoundController Extends Controller {
   public function getLogFile($request, $response, $args){
     $round = $this->getRound($args['id']);
     $file = filter_var($args['file'], FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
+    $format = false;
     if(isset($args['format'])) {
       $format = filter_var($args['format'], FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
     }

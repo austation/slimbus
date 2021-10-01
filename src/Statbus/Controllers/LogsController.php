@@ -198,7 +198,7 @@ class LogsController Extends Controller {
       $l['text'] = str_replace('Incarcerated', " <div class='badge badge-warning btn-sm'>Incarcerated</div> ", $l['text']);
       $l['text'] = str_replace('Discharged', " <div class='badge badge-primary btn-sm'>Discharged</div> ", $l['text']);
     }
-    return $file;
+    return $this->file;
   }
   private function genericLogParse($file){
     $lines = [];
