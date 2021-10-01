@@ -166,6 +166,7 @@ class RoundController Extends Controller {
 
   public function listLogs($request, $response, $args){
     $round = $this->getRound($args['id']);
+    $format = false;
     if(isset($request->getQueryParams()['format'])) {
       $format = filter_var($request->getQueryParams()['format'], FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
     }
