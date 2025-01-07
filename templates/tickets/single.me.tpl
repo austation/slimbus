@@ -1,6 +1,5 @@
 {% extends ('base/index.html') %}
   {% block content %}
-  {% include 'tgdb/html/nav.html' %}
   <div class="row">
     <div class="col-md-9">
       <h3>Ticket #{{tickets[0].ticket}}</h3>
@@ -11,12 +10,12 @@
   {% endfor %}
     </div>
     <div class="col-md-3">
-      <h3><small class="text-muted">Round:</small><a href="{{path_for('round.single', {'id': tickets[0].round})}}">{{tickets[0].round}}</a> (<a href="{{path_for('ticket.round', {'round': tickets[0].round})}}">T</a>)</h3>
+      <h3><small class="text-muted">Round:</small><a href="{{path_for('round.single', {'id': tickets[0].round})}}">{{tickets[0].round}}</a></h3>
       <hr>
       <hr>
       <h3><small class="text-muted">Server:</small><br>{{tickets[0].server_data.name}}</h3>
       <hr>
-      <h3 class="text-{{tickets|last.class}}"><small class="text-muted">Status:</small><br>{{tickets|last.action}}</h3>
+      <h3 class="text-{{tickets|last.class}}"><small class="text-muted">Last Status:</small><br>{{tickets|last.action}}</h3>
       <hr>
       <strong class="text-muted">Labels</strong>
       <span class="badge badge-{{tickets|last.class}} d-block mb-1">{{tickets|last.action}}</span>
@@ -30,7 +29,14 @@
         <span class="badge badge-secondary d-block mb-1">Unresolved</span>
       {% endif %}
       <hr>
+      <h3><small class="text-muted">Public</small></h3>
+        {% if 1 == status.status %}
+          Link: <a href="{{path_for('publicTicket',{'identifier':status.identifier})}}" target="_blank" rel="noopener noreferrer">{{status.identifier}}</a>
+        {% endif %}
+        {% if status.canPublicize %}
+          {% include 'tickets/html/publicToggle.html' %}
+        {% endif %}
+      <hr>
     </div>
   </div>
-
   {% endblock %}

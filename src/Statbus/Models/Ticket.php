@@ -15,8 +15,11 @@ class Ticket {
   }
 
   public function parseTicket(&$ticket){
-
     $ticket->icon = "fa-ticket";
+    if (!isset($ticket->s_rank)){
+      $ticket->s_rank = 'player';
+      $ticket->r_rank = 'player';
+    }
 
     $ticket->sender = new \stdclass;
     $ticket->sender->ckey = $ticket->sender_ckey;
@@ -126,8 +129,7 @@ class Ticket {
         $ticket->icon = "network-wired";
       break;
     }
-
-    if(isset($ticket->status)) {
+    if(isset($ticket->status)){
       switch ($ticket->status){
         case 'Ticket Opened':
           $ticket->status_class = 'info';
@@ -138,11 +140,6 @@ class Ticket {
         case 'Reply':
           $ticket->status_class = 'warning';
           $ticket->icon = "reply";
-        break;
-
-        case 'Claimed':
-          $ticket->status_class = "info";
-          $ticket->icon = "user";
         break;
 
         case 'Resolved':
@@ -178,6 +175,7 @@ class Ticket {
         default:
           $ticket->status_class = 'success';
           // $ticket->status = "Resolved";
+        break;
       }
     }
 

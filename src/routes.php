@@ -1,10 +1,11 @@
 <?php
 
+use Slim\App;
 use Slim\Http\Request;
 use Slim\Http\Response;
 
-// $app->add(new \Statbus\Middleware\OpenGraph($container));
-$container = $app->getContainer();
+return function (App $app) {
+    $container = $app->getContainer();
 $app->add($container->get('csrf'));
 
 //Index URL
@@ -19,6 +20,8 @@ $app->get('/names', \Statbus\Controllers\NameVoteController::class . ':index')->
 $app->post('/names', \Statbus\Controllers\NameVoteController::class . ':cast')->setName('nameVoter.cast');
 
 $app->get('/names/rank/{rank}', \Statbus\Controllers\NameVoteController::class . ':rankings')->setName('nameVoter.results');
+
+$app->get('/ticket/{identifier}', \Statbus\Controllers\TicketController::class . ':publicTicket')->setName('publicTicket');
 
 //Auth
 $app->group('', function () {
@@ -50,7 +53,14 @@ $app->group('', function () {
 
   //My rounds
   $this->get('/me/rounds[/page/{page}]', \Statbus\Controllers\RoundController::class . ':getMyRounds')->setName('me.rounds');
-});
+
+  $this->get('/me/tickets[/page/{page}]', \Statbus\Controllers\TicketController::class . ':myTickets')->setName('me.tickets');
+
+  $this->get('/me/tickets/{round}/{ticket}', \Statbus\Controllers\TicketController::class . ':myTicket')->setName('me.tickets.single');
+
+  $this->post('/me/tickets/{round}/{ticket}', \Statbus\Controllers\TicketController::class . ':myTicket')->setName('me.tickets.public');
+
+})->add(new \Statbus\Middleware\UserGuard($container, 1));
 
 //Public player pages
 $app->group('', function () {
@@ -133,10 +143,13 @@ $app->group('', function () {
   //Win-Loss Ratios
   $this->get('/info/winloss', \Statbus\Controllers\RoundController::class . ':winLoss')->setName('winloss');
 
+  //Win-Loss Ratios
+  $this->get('/info/mapularity', \Statbus\Controllers\StatbusController::class . ':mapularity')->setName('mapularity');
+
 
 });
 
-//Library
+//Library & Art Gallery
 $app->group('', function () {
 
   //Index
@@ -147,6 +160,9 @@ $app->group('', function () {
 
   //Delete Book (admin only)
   $this->post('/library/{id:[0-9]+}/delete', \Statbus\Controllers\LibraryController::class . ':deleteBook')->setName('library.delete');
+
+  //Gallery Index
+  $this->map(['GET','POST'], '/library/gallery[/{server}]', \Statbus\Controllers\LibraryController::class . ':artGallery')->setName('gallery.index');
 
 })->add(new \Statbus\Middleware\UserGuard($container, 0));
 
@@ -199,6 +215,8 @@ $app->group('', function () {
   //Tickets!
   $this->get('/tgdb/tickets[/page/{page}]', \Statbus\Controllers\TicketController::class . ':index')->setName('ticket.index');
 
+  $this->get('/tgdb/tickets/{round}', \Statbus\Controllers\TicketController::class . ':roundTickets')->setName('ticket.round');
+
   $this->get('/tgdb/tickets/{round}/{ticket}', \Statbus\Controllers\TicketController::class . ':single')->setName('ticket.single');
 
   //Character Name Search
@@ -207,3 +225,5 @@ $app->group('', function () {
   $this->post('/tgdb/name2ckey', \Statbus\Controllers\PlayerController::class . ':name2ckey')->setName('name2ckey');
 
 })->add(new \Statbus\Middleware\UserGuard($container, 2));
+
+};

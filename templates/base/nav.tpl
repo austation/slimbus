@@ -19,21 +19,21 @@
             Deaths
           </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{path_for('library.index')}}">
-            <i class="fas fa-book"></i>
-            Library
-          </a>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="" role="button" aria-haspopup="true" aria-expanded="farlse"><i class="fas fa-university"></i> Library</a>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="{{path_for('library.index')}}"><i class="fas fa-book"></i> Book Catalog</a>
+            <a class="dropdown-item" href="{{path_for('gallery.index')}}"><i class="fas fa-palette"></i> Art Gallery</a>
+          </div>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{path_for('poll.index')}}"><i class="fas fa-vote-yea"></i> Polls</a>
-        </li>
+
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="" role="button" aria-haspopup="true" aria-expanded="farlse"><i class="fas fa-info-circle"></i> Info</a>
           <div class="dropdown-menu">
             <a class="dropdown-item" href="{{path_for('population')}}"><i class="fas fa-users"></i> Server Population</a>
             <a class="dropdown-item" href="{{path_for('playtime')}}"><i class="fas fa-chart-line"></i> Playtime</a>
             <a class="dropdown-item" href="{{path_for('winloss')}}"><i class="fas fa-percent"></i> Gamemode Win Loss Ratios</a>
+            <a class="dropdown-item" href="{{path_for('mapularity')}}"><i class="fas fa-map-marked-alt"></i> Mapularity</a>
             <a class="dropdown-item" href="{{path_for('admin_connections')}}"><i class="fas fa-user-clock"></i> Admin Activity</a>
             <a class="dropdown-item" href="{{path_for('admin_logs')}}"><i class="fas fa-user-times"></i> Admin Rank Activity</a>
           </div>

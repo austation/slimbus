@@ -15,6 +15,7 @@ class LibraryController Extends Controller {
       AND (tbl_library.deleted IS NULL OR tbl_library.deleted = 0)") / $this->per_page);
 
     $this->libraryModel = new Library();
+    $this->guzzle = $this->container->get('guzzle');
 
     $this->breadcrumbs['Library'] = $this->router->pathFor('library.index');
     $this->url = $this->router->pathFor('library.index');
@@ -145,4 +146,119 @@ class LibraryController Extends Controller {
       'ogdata'      => $this->ogdata
     ]);
   }
+
+  public function artGallery($request, $response, $args){
+    $this->alt_db = $this->container->get('ALT_DB');
+    $servers = $this->container->get('settings')['statbus']['servers'];
+    if(isset($args['server'])){
+      $server = ucfirst($args['server']);
+      if($server = $servers[array_search($server, array_column($servers,'name'))]){
+        $json_url = str_replace('data/logs', 'data', $server['public_logs'].'paintings.json');
+        try{
+          $res = $this->guzzle->request('GET',$json_url);
+        } catch (GCeption $e){
+          return false;
+        }
+        $art = $res->getBody()->getContents();
+        if(!$art){
+          return false;
+        }
+        $art = json_decode($art);
+        if($this->alt_db) {
+          $art = $this->mapVotes($server['name'], $art);
+          // $this->spamVotes($server['name'], $art);
+        }
+        if('GET' === $request->getMethod()){ //Just browsing
+          return $this->view->render($response, 'gallery/gallery.tpl',[
+            'art' => $art,
+            'url' => str_replace('data/logs/', 'data/paintings', $server['public_logs']),
+            'server' => $server
+          ]);
+        } elseif ($this->alt_db && 'POST' === $request->getMethod()){
+          if(false === $request->getAttribute('csrf_status')){
+            $response = $response->withStatus(403);
+            return $response->withJson(json_encode('CSRF failed'));
+          }
+          $this->csrf = $this->container->get('csrf');
+          $user = (new User($this->container))->fetchUser();
+          $data = $request->getParsedBody();
+          $data['server'] = $server['name'];
+          $data['ckey'] = $user->ckey;
+          $return = $this->castVote($data);
+          return $response->withJson($return);
+        }
+      }
+    }
+    return $this->view->render($response, 'gallery/index.tpl',[
+      'servers' => $servers
+    ]);
+  }
+
+  private function castVote($data){
+
+    $this->alt_db->run("INSERT INTO art_vote (artwork, rating, ckey, `server`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating = ?",
+    $data['artwork'],
+    $data['rating'],
+    $data['ckey'],
+    $data['server'],
+    $data['rating']);
+
+    $this->csrf = new \Statbus\Extensions\CsrfExtension($this->container->get('csrf'));
+    $return['csrf'] = $this->csrf->getGlobals();
+    $return['votes'] = $this->getArtRating($data['artwork']);
+    return $return;
+  }
+
+  private function getArtRating($artwork){
+    return $this->alt_db->row("SELECT format(avg(rating),2) as rating, artwork, count(id) as votes FROM art_vote WHERE artwork = ?;", $artwork);
+  }
+
+  private function mapVotes($server, $art){
+    $votes = $this->alt_db->run("SELECT format(avg(rating),2) as rating, artwork, count(id) as votes FROM art_vote WHERE `server` = ? GROUP BY artwork;",$server);
+    foreach($art->library as &$a){
+      $a->rating = '?';
+      $a->votes = 'No votes';
+      foreach($votes as $v){
+        if($v->artwork === $a->md5){
+          $a->rating = (float) $v->rating;
+          $a->votes = $v->votes;
+        }
+      }
+    }
+    foreach($art->library_private as &$a){
+      $a->rating = '?';
+      $a->votes = 'No votes';
+      foreach($votes as $v){
+        if($v->artwork === $a->md5){
+          $a->rating = (float) $v->rating;
+          $a->votes = $v->votes;
+        } 
+      }
+    }
+    foreach($art->library_secure as &$a){
+      $a->rating = '?';
+      $a->votes = 'No votes';
+      foreach($votes as $v){
+        if($v->artwork === $a->md5){
+          $a->rating = (float) $v->rating;
+          $a->votes = $v->votes;
+        }
+      }
+    }
+    return $art;
+  }
+
+  private function spamVotes($server, $art){
+    while ($i < 1000){
+      $this->alt_db->run("INSERT INTO art_vote (artwork, rating, ckey, `server`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating = ?",
+      pick($art->library)->md5,
+      (int) floor(rand(1,5)),
+      substr(hash('sha512',base64_encode(random_bytes(16))),0,16),
+      $server,
+      (int) floor(rand(1,5)));
+      $i++;
+    }
+    
+  }
+
 }
