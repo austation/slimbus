@@ -19,14 +19,14 @@ class AchievementController Extends Controller {
     $this->cheevoMap = $this->DB->run("SELECT achievement_key AS `key`,
     achievement_version AS version,
     achievement_type AS type
-    FROM tbl_achievement_metadata");
+    FROM achievement_metadata");
   }
 
   public function getPlayerAchievements($ckey) {
     $cheevos = $this->DB->run("SELECT 
       achievement_key AS `key`,
       value
-      FROM tbl_achievements
+      FROM achievements
       WHERE ckey = ?", $ckey);
     $this->mapMetadata($cheevos);
     return $this->cheevos;

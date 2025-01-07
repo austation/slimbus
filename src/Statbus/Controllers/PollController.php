@@ -10,8 +10,8 @@ class PollController Extends Controller {
   
   public function __construct(ContainerInterface $container) {
     parent::__construct($container);
-    $this->pages = ceil($this->DB->cell("SELECT count(tbl_poll_question.id) FROM tbl_poll_question WHERE tbl_poll_question.adminonly != 1
-      AND tbl_poll_question.dontshow IS NULL") / $this->per_page);
+    $this->pages = ceil($this->DB->cell("SELECT count(poll_question.id) FROM poll_question WHERE poll_question.adminonly != 1
+      AND poll_question.dontshow IS NULL") / $this->per_page);
 
     $this->pollModel = new Poll();
     $this->breadcrumbs['Polls'] = $this->router->pathFor('poll.index');
@@ -25,10 +25,10 @@ class PollController Extends Controller {
     $polls = $this->DB->run("SELECT P.*,
     SEC_TO_TIME(TIMESTAMPDIFF(SECOND, P.starttime, P.endtime)) AS duration,
     IF(P.endtime < NOW(), 1, 0) AS ended,
-    count(tbl_poll_vote.id) + count(tbl_poll_textreply.id)  as totalVotes
-    FROM tbl_poll_question P
-    LEFT JOIN tbl_poll_vote ON P.id = tbl_poll_vote.pollid
-    LEFT JOIN tbl_poll_textreply ON P.id = tbl_poll_textreply.pollid
+    count(poll_vote.id) + count(poll_textreply.id)  as totalVotes
+    FROM poll_question P
+    LEFT JOIN poll_vote ON P.id = poll_vote.pollid
+    LEFT JOIN poll_textreply ON P.id = poll_textreply.pollid
     WHERE (P.dontshow = 0 OR  P.dontshow = 1 AND P.endtime < NOW())
     AND P.adminonly = 0
     GROUP BY P.id
@@ -58,42 +58,42 @@ class PollController Extends Controller {
 
   public function getPoll($id){
     $id = filter_var($id, FILTER_VALIDATE_INT);
-    $poll = $this->DB->row("SELECT tbl_poll_question.*,
-    SEC_TO_TIME(TIMESTAMPDIFF(SECOND, tbl_poll_question.starttime, tbl_poll_question.endtime)) AS duration,
-    IF(tbl_poll_question.endtime < NOW(), 1, 0) AS ended,
-    count(tbl_poll_vote.id) + count(tbl_poll_textreply.id) as totalVotes
-    FROM tbl_poll_question
-    LEFT JOIN tbl_poll_vote ON tbl_poll_question.id = tbl_poll_vote.pollid
-    LEFT JOIN tbl_poll_textreply ON tbl_poll_question.id = tbl_poll_textreply.pollid
-    WHERE tbl_poll_question.id = ?
-    AND (tbl_poll_question.dontshow = 0 OR  tbl_poll_question.dontshow = 1 AND tbl_poll_question.endtime < NOW())
-    AND tbl_poll_question.adminonly = 0
-    GROUP BY tbl_poll_question.id
-    ORDER BY tbl_poll_question.id DESC", $id);
+    $poll = $this->DB->row("SELECT poll_question.*,
+    SEC_TO_TIME(TIMESTAMPDIFF(SECOND, poll_question.starttime, poll_question.endtime)) AS duration,
+    IF(poll_question.endtime < NOW(), 1, 0) AS ended,
+    count(poll_vote.id) + count(poll_textreply.id) as totalVotes
+    FROM poll_question
+    LEFT JOIN poll_vote ON poll_question.id = poll_vote.pollid
+    LEFT JOIN poll_textreply ON poll_question.id = poll_textreply.pollid
+    WHERE poll_question.id = ?
+    AND (poll_question.dontshow = 0 OR  poll_question.dontshow = 1 AND poll_question.endtime < NOW())
+    AND poll_question.adminonly = 0
+    GROUP BY poll_question.id
+    ORDER BY poll_question.id DESC", $id);
 
     if('TEXT' == $poll->polltype){
-      $poll->results = $this->DB->run("SELECT * FROM tbl_poll_textreply WHERE pollid = ?", $poll->id);
+      $poll->results = $this->DB->run("SELECT * FROM poll_textreply WHERE pollid = ?", $poll->id);
     } else {
       if (!$filter){
-        $poll->results = $this->DB->run("SELECT COUNT(tbl_poll_vote.id) AS votes,
-        tbl_poll_option.text AS `option`
-        FROM tbl_poll_vote
-        LEFT JOIN tbl_poll_option ON tbl_poll_vote.optionid = tbl_poll_option.id
-        WHERE tbl_poll_vote.pollid = ?
-        GROUP BY tbl_poll_vote.optionid
+        $poll->results = $this->DB->run("SELECT COUNT(poll_vote.id) AS votes,
+        poll_option.text AS `option`
+        FROM poll_vote
+        LEFT JOIN poll_option ON poll_vote.optionid = poll_option.id
+        WHERE poll_vote.pollid = ?
+        GROUP BY poll_vote.optionid
         ORDER BY votes DESC", $poll->id);
       } else {
         $poll->results = $this->DB->run("SELECT
         COUNT(o.id) AS votes,
         o.text AS `option`
-        FROM tbl_poll_vote AS v
-        LEFT JOIN tbl_poll_option AS o ON (v.optionid = o.id)
-        LEFT JOIN tbl_player AS p ON (v.ckey = p.ckey)
-        LEFT JOIN tbl_poll_question AS q ON (v.pollid = q.id) 
+        FROM poll_vote AS v
+        LEFT JOIN poll_option AS o ON (v.optionid = o.id)
+        LEFT JOIN player AS p ON (v.ckey = p.ckey)
+        LEFT JOIN poll_question AS q ON (v.pollid = q.id) 
         WHERE v.pollid = ?
         AND
           (SELECT SUM(j.delta)
-          FROM tbl_role_time_log AS j
+          FROM role_time_log AS j
           WHERE j.job IN ('Living')
           AND j.datetime BETWEEN q.starttime - INTERVAL 30 DAY AND q.starttime
           AND j.ckey = v.ckey) >= 60

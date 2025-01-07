@@ -26,11 +26,11 @@ class StatbusController extends Controller {
 
   public function getBigNumbers(){
     $numbers = new \stdclass;
-    $numbers->playtime = number_format($this->DB->row("SELECT sum(tbl_role_time.minutes) AS minutes FROM tbl_role_time WHERE tbl_role_time.job = 'Living';")->minutes);
-    $numbers->deaths = number_format($this->DB->cell("SELECT count(id) as deaths FROM tbl_death;")+rand(-15,15));//fuzzed
-    $numbers->rounds = number_format($this->DB->cell("SELECT count(id) as rounds FROM tbl_round;"));
-    $numbers->books = number_format($this->DB->cell("SELECT count(tbl_library.id) FROM tbl_library WHERE tbl_library.content != ''
-      AND (tbl_library.deleted IS NULL OR tbl_library.deleted = 0)"));
+    $numbers->playtime = number_format($this->DB->row("SELECT sum(role_time.minutes) AS minutes FROM role_time WHERE role_time.job = 'Living';")->minutes);
+    $numbers->deaths = number_format($this->DB->cell("SELECT count(id) as deaths FROM death;")+rand(-15,15));//fuzzed
+    $numbers->rounds = number_format($this->DB->cell("SELECT count(id) as rounds FROM round;"));
+    $numbers->books = number_format($this->DB->cell("SELECT count(library.id) FROM library WHERE library.content != ''
+      AND (library.deleted IS NULL OR library.deleted = 0)"));
     return $numbers;
   }
 
@@ -57,17 +57,17 @@ class StatbusController extends Controller {
       R.flags,
       R.exclude_flags,
       R.can_edit_flags,
-      (SELECT count(C.id) FROM tbl_connection_log AS C
+      (SELECT count(C.id) FROM connection_log AS C
       WHERE A.ckey = C.ckey AND C.datetime BETWEEN CURDATE() - INTERVAL ? DAY AND CURDATE()) AS connections,
-      (SELECT sum(G.delta) FROM tbl_role_time_log AS G
+      (SELECT sum(G.delta) FROM role_time_log AS G
       WHERE A.ckey = G.ckey AND G.job = 'Ghost' AND G.datetime BETWEEN CURDATE() - INTERVAL ? DAY AND CURDATE()) AS ghost,
-      (SELECT sum(L.delta) FROM tbl_role_time_log AS L
+      (SELECT sum(L.delta) FROM role_time_log AS L
       WHERE A.ckey = L.ckey
       AND L.job = 'Living'
       AND L.datetime BETWEEN CURDATE() - INTERVAL ? DAY AND CURDATE()
       ) AS living
-      FROM tbl_admin as A
-      LEFT JOIN tbl_admin_ranks AS R ON A.rank = R.rank
+      FROM admin as A
+      LEFT JOIN admin_ranks AS R ON A.rank = R.rank
       GROUP BY A.ckey;", $interval, $interval, $interval);
     $perms = $this->container->get('settings')['statbus']['perm_flags'];
 
@@ -110,7 +110,7 @@ class StatbusController extends Controller {
     if(isset($args['page'])) {
       $this->page = filter_var($args['page'], FILTER_VALIDATE_INT);
     }
-    $this->pages = ceil($this->DB->cell("SELECT count(tbl_admin_log.id) FROM tbl_admin_log") / $this->per_page);
+    $this->pages = ceil($this->DB->cell("SELECT count(admin_log.id) FROM admin_log") / $this->per_page);
     $logs = $this->DB->run("SELECT
       L.id,
       L.datetime,
@@ -119,8 +119,8 @@ class StatbusController extends Controller {
       L.target,
       L.log,
       IF(A.rank IS NULL, 'Player', A.rank) as adminrank
-      FROM tbl_admin_log as L
-      LEFT JOIN tbl_admin as A ON L.adminckey = A.ckey
+      FROM admin_log as L
+      LEFT JOIN admin as A ON L.adminckey = A.ckey
       ORDER BY L.datetime DESC
       LIMIT ?,?", ($this->page * $this->per_page) - $this->per_page, $this->per_page);
     $pm = new Player($this->container->get('settings')['statbus']);
@@ -196,7 +196,7 @@ class StatbusController extends Controller {
     FLOOR(AVG(playercount)) AS `players`,
     DATE_FORMAT(`time`, '%Y-%m-%e %H:00:00') as `date`,
     count(round_id) AS rounds
-    FROM tbl_legacy_population
+    FROM legacy_population
     WHERE `time` > CURDATE() - INTERVAL 30 DAY
     GROUP BY HOUR (`time`), DAY(`TIME`), MONTH(`TIME`), YEAR(`TIME`)
     ORDER BY `time` DESC;";
@@ -211,7 +211,7 @@ class StatbusController extends Controller {
     $query = "SELECT SUM(`delta`) AS `minutes`,
       DATE_FORMAT(`datetime`, '%Y-%m-%d %H:00:00') AS `date`,
       `job`
-      FROM tbl_role_time_log
+      FROM role_time_log
       WHERE `job` IN ('Living','Ghost')
       AND `DATETIME` > CURDATE() - INTERVAL 30 DAY
       GROUP BY `job`, HOUR(`datetime`), DAY(`DATETIME`), MONTH(`DATETIME`), YEAR(`DATETIME`)
@@ -226,11 +226,11 @@ class StatbusController extends Controller {
   public function submitToAuditLog($action, $text){
     //Check if the audit log exists
     try {
-      $this->DB->run("SELECT 1 FROM tbl_external_activity LIMIT 1");
+      $this->DB->run("SELECT 1 FROM external_activity LIMIT 1");
     } catch (\PDOException $e){
       return false;
     }
-    $this->DB->insert('tbl_external_activity',[
+    $this->DB->insert('external_activity',[
       'action' => $action,
       'text'   => $text,
       'ckey'   => ($this->user->ckey) ? $this->user->ckey : null,
@@ -267,16 +267,16 @@ class StatbusController extends Controller {
     }
     $list = "('".implode("','",$this->sb['candidates'])."')";
     $candidates = $this->DB->run("SELECT A.ckey,
-      (SELECT count(C.id) FROM tbl_connection_log AS C
+      (SELECT count(C.id) FROM connection_log AS C
       WHERE A.ckey = C.ckey AND C.datetime BETWEEN CURDATE() - INTERVAL ? DAY AND CURDATE()) AS connections,
-      (SELECT sum(G.delta) FROM tbl_role_time_log AS G
+      (SELECT sum(G.delta) FROM role_time_log AS G
       WHERE A.ckey = G.ckey AND G.job = 'Ghost' AND G.datetime BETWEEN CURDATE() - INTERVAL ? DAY AND CURDATE()) AS ghost,
-      (SELECT sum(L.delta) FROM tbl_role_time_log AS L
+      (SELECT sum(L.delta) FROM role_time_log AS L
       WHERE A.ckey = L.ckey
       AND L.job = 'Living'
       AND L.datetime BETWEEN CURDATE() - INTERVAL ? DAY AND CURDATE()
       ) AS living
-      FROM tbl_player as A
+      FROM player as A
       WHERE A.ckey IN $list
       GROUP BY A.ckey;", $interval, $interval, $interval);
     $pm = new Player($this->container->get('settings')['statbus']);
@@ -295,7 +295,7 @@ class StatbusController extends Controller {
     date_format(r.initialize_datetime,'%M %Y') as `date`,
         count(r.id) as rounds, 
         LOWER(IF(ISNULL(r.map_name), 'Undefined', replace(replace(r.map_name, '_', ' '),' ', ''))) as `map_name`
-        FROM tbl_round r
+        FROM round r
         WHERE r.initialize_datetime > '2017-02-29'
         GROUP BY map_name, MONTH(r.initialize_datetime), YEAR(r.initialize_datetime)
         HAVING rounds > 1

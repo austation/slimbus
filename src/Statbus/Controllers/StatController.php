@@ -14,7 +14,7 @@ class StatController Extends Controller {
   }
 
   public function getRoundStat($round, $stat, $json = false) {
-    $stat = $this->DB->row("SELECT * FROM tbl_feedback WHERE round_id = ? AND key_name = ?", $round, $stat);
+    $stat = $this->DB->row("SELECT * FROM feedback WHERE round_id = ? AND key_name = ?", $round, $stat);
     if(!$stat){
       return false;
     }
@@ -29,7 +29,7 @@ class StatController Extends Controller {
       $and = "((key_name = '";
       $and.= implode("') OR (key_name = '", $stats);
       $and.= "'))";
-      $stats = $this->DB->run("SELECT * FROM tbl_feedback
+      $stats = $this->DB->run("SELECT * FROM feedback
         WHERE $and
         AND round_id = ?", $round);
       $tmp = [];
@@ -40,7 +40,7 @@ class StatController Extends Controller {
       $stats = $tmp;
       return $stats;
     } else {
-      $stats = $this->DB->run("SELECT key_name FROM tbl_feedback WHERE round_id = ? ORDER BY key_name ASC", $round);
+      $stats = $this->DB->run("SELECT key_name FROM feedback WHERE round_id = ? ORDER BY key_name ASC", $round);
       if (!$stats) return false;
       foreach($stats as $s){
         $tmp[] = $s->key_name;

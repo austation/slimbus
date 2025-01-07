@@ -11,27 +11,27 @@ use Statbus\Controllers\LogsController as LogsController;
 
 class RoundController Extends Controller {
 
-  private $columns = "tbl_round.id,
-      tbl_round.initialize_datetime,
-      tbl_round.start_datetime,
-      tbl_round.shutdown_datetime,
-      tbl_round.end_datetime,
-      tbl_round.server_port AS port,
-      tbl_round.commit_hash,
-      tbl_round.game_mode AS mode,
-      tbl_round.game_mode_result AS result,
-      tbl_round.end_state,
-      tbl_round.shuttle_name AS shuttle,
-      tbl_round.map_name AS map,
-      tbl_round.station_name,
-      SEC_TO_TIME(TIMESTAMPDIFF(SECOND, tbl_round.initialize_datetime, tbl_round.shutdown_datetime)) AS duration,
-      SEC_TO_TIME(TIMESTAMPDIFF(SECOND, tbl_round.start_datetime, tbl_round.end_datetime)) AS round_duration,
-      SEC_TO_TIME(TIMESTAMPDIFF(SECOND, tbl_round.initialize_datetime, tbl_round.start_datetime)) AS init_time,
-      SEC_TO_TIME(TIMESTAMPDIFF(SECOND, tbl_round.end_datetime, tbl_round.shutdown_datetime)) AS shutdown_time";
+  private $columns = "round.id,
+      round.initialize_datetime,
+      round.start_datetime,
+      round.shutdown_datetime,
+      round.end_datetime,
+      round.server_port AS port,
+      round.commit_hash,
+      round.game_mode AS mode,
+      round.game_mode_result AS result,
+      round.end_state,
+      round.shuttle_name AS shuttle,
+      round.map_name AS map,
+      round.station_name,
+      SEC_TO_TIME(TIMESTAMPDIFF(SECOND, round.initialize_datetime, round.shutdown_datetime)) AS duration,
+      SEC_TO_TIME(TIMESTAMPDIFF(SECOND, round.start_datetime, round.end_datetime)) AS round_duration,
+      SEC_TO_TIME(TIMESTAMPDIFF(SECOND, round.initialize_datetime, round.start_datetime)) AS init_time,
+      SEC_TO_TIME(TIMESTAMPDIFF(SECOND, round.end_datetime, round.shutdown_datetime)) AS shutdown_time";
   
   public function __construct(ContainerInterface $container) {
     parent::__construct($container);
-    $this->pages = ceil($this->DB->cell("SELECT count(tbl_round.id) FROM tbl_round") / $this->per_page);
+    $this->pages = ceil($this->DB->cell("SELECT count(round.id) FROM round") / $this->per_page);
     $this->sc = new StatController($this->container);
 
     $this->roundModel = new Round($this->container->get('settings')['statbus']);
@@ -44,9 +44,9 @@ class RoundController Extends Controller {
       $this->page = filter_var($args['page'], FILTER_VALIDATE_INT);
     }
     $rounds = $this->DB->run("SELECT $this->columns
-      FROM tbl_round
-      WHERE tbl_round.shutdown_datetime IS NOT NULL
-      ORDER BY tbl_round.shutdown_datetime DESC
+      FROM round
+      WHERE round.shutdown_datetime IS NOT NULL
+      ORDER BY round.shutdown_datetime DESC
       LIMIT ?,?", ($this->page * $this->per_page) - $this->per_page, $this->per_page);
 
     foreach ($rounds as &$round){
@@ -125,7 +125,7 @@ class RoundController Extends Controller {
   }
 
   public function stationNames($request, $response, $args){
-    $names = $this->DB->run("SELECT station_name, id FROM tbl_round WHERE station_name IS NOT NULL ORDER BY RAND() DESC LIMIT 0, 1000;");
+    $names = $this->DB->run("SELECT station_name, id FROM round WHERE station_name IS NOT NULL ORDER BY RAND() DESC LIMIT 0, 1000;");
     return $this->view->render($response, 'rounds/stationnames.tpl',[
       'names'       => $names,
     ]);
@@ -150,13 +150,13 @@ class RoundController Extends Controller {
       MAX(prev.id) AS prev,
       COUNT(D.id) AS deaths,
       COUNT(T.id) as tickets
-      FROM tbl_round
-      LEFT JOIN tbl_round AS next ON next.id = tbl_round.id + 1
-      LEFT JOIN tbl_round AS prev ON prev.id = tbl_round.id - 1 
-      LEFT JOIN tbl_death AS D ON D.round_id = tbl_round.id
-      LEFT JOIN tbl_ticket AS T ON T.round_id = tbl_round.id AND T.action = 'Ticket Opened'
-      WHERE tbl_round.id = ?
-      AND tbl_round.shutdown_datetime IS NOT NULL", $id);
+      FROM round
+      LEFT JOIN round AS next ON next.id = round.id + 1
+      LEFT JOIN round AS prev ON prev.id = round.id - 1 
+      LEFT JOIN death AS D ON D.round_id = round.id
+      LEFT JOIN ticket AS T ON T.round_id = round.id AND T.action = 'Ticket Opened'
+      WHERE round.id = ?
+      AND round.shutdown_datetime IS NOT NULL", $id);
     $round = $this->roundModel->parseRound($round);
     $url = parent::getFullURL($this->router->pathFor('round.single',['id'=>$round->id]));
     $this->breadcrumbs[$round->id] = $url;
@@ -286,10 +286,10 @@ class RoundController Extends Controller {
     if(isset($args['stat'])) {
       $stat = filter_var($args['stat'], FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
     }
-    $this->pages = ceil($this->DB->cell("SELECT count(tbl_feedback.id) FROM tbl_feedback WHERE key_name = ?", $stat) / $this->per_page);
+    $this->pages = ceil($this->DB->cell("SELECT count(feedback.id) FROM feedback WHERE key_name = ?", $stat) / $this->per_page);
     $rounds = $this->DB->run("SELECT $this->columns
-      FROM tbl_feedback
-      LEFT JOIN tbl_round ON tbl_feedback.round_id = tbl_round.id
+      FROM feedback
+      LEFT JOIN round ON feedback.round_id = round.id
       WHERE key_name = ?
       ORDER BY round_id DESC
       LIMIT ?,?", $stat, ($this->page * $this->per_page) - $this->per_page, $this->per_page);
@@ -306,16 +306,16 @@ class RoundController Extends Controller {
   }
 
   public function getRoundsForCkey($ckey){
-    $this->pages = ceil($this->DB->cell("SELECT count(tbl_round.id) FROM tbl_connection_log
-        LEFT JOIN tbl_round ON tbl_connection_log.round_id = tbl_round.id
-        WHERE tbl_connection_log.ckey = ?
-        AND tbl_round.shutdown_datetime IS NOT NULL", $ckey) / $this->per_page);
+    $this->pages = ceil($this->DB->cell("SELECT count(round.id) FROM connection_log
+        LEFT JOIN round ON connection_log.round_id = round.id
+        WHERE connection_log.ckey = ?
+        AND round.shutdown_datetime IS NOT NULL", $ckey) / $this->per_page);
     $rounds = $this->DB->run("SELECT $this->columns
-      FROM tbl_connection_log
-      LEFT JOIN tbl_round ON tbl_connection_log.round_id = tbl_round.id
-      WHERE tbl_connection_log.ckey = ?
-      AND tbl_round.shutdown_datetime IS NOT NULL
-      ORDER BY tbl_connection_log.`datetime` DESC
+      FROM connection_log
+      LEFT JOIN round ON connection_log.round_id = round.id
+      WHERE connection_log.ckey = ?
+      AND round.shutdown_datetime IS NOT NULL
+      ORDER BY connection_log.`datetime` DESC
       LIMIT ?,?", $ckey, ($this->page * $this->per_page) - $this->per_page, $this->per_page);
     foreach ($rounds as &$round){
       $round = $this->roundModel->parseRound($round);
@@ -368,7 +368,7 @@ class RoundController Extends Controller {
     if(!$this->userCanAccessTGDB){
       return false;
     }
-    $rounds = $this->DB->run("SELECT DISTINCT(*) FROM tbl_round WHERE `shutdown_datetime` IS NULL LIMIT 0, 4 ORDER BY id DESC");
+    $rounds = $this->DB->run("SELECT DISTINCT(*) FROM round WHERE `shutdown_datetime` IS NULL LIMIT 0, 4 ORDER BY id DESC");
     return $request->withJson($rounds);
   }
 
@@ -384,7 +384,7 @@ class RoundController Extends Controller {
     $minmax = $this->DB->row("SELECT 
       min(STR_TO_DATE(R.initialize_datetime, '%Y-%m-%d')) AS min,
       max(STR_TO_DATE(R.shutdown_datetime, '%Y-%m-%d')) AS max
-      FROM tbl_round AS R
+      FROM round AS R
       WHERE R.shutdown_datetime != '0000-00-00 00:00:00'
       AND R.initialize_datetime != '0000-00-00 00:00:00'");
     if(!$start) {
@@ -407,19 +407,19 @@ class RoundController Extends Controller {
   }
 
   public function getWinLossRatios($start = null, $end = null){
-    $data = $this->DB->run("SELECT count(tbl_round.id) AS rounds,
-        tbl_round.game_mode,
-        tbl_round.game_mode_result,
-        FLOOR(AVG(TIMESTAMPDIFF(MINUTE, tbl_round.start_datetime, tbl_round.end_datetime))) AS duration
-        FROM tbl_round
-        WHERE tbl_round.game_mode IS NOT NULL
-        AND tbl_round.game_mode != 'undefined'
-        AND tbl_round.game_mode_result IS NOT NULL
-        AND tbl_round.game_mode_result != 'undefined'
-        AND tbl_round.initialize_datetime BETWEEN ? AND ?
-        AND tbl_round.shutdown_datetime IS NOT NULL
-        GROUP BY tbl_round.game_mode, tbl_round.game_mode_result
-        ORDER BY tbl_round.game_mode ASC, rounds DESC;", $start, $end);
+    $data = $this->DB->run("SELECT count(round.id) AS rounds,
+        round.game_mode,
+        round.game_mode_result,
+        FLOOR(AVG(TIMESTAMPDIFF(MINUTE, round.start_datetime, round.end_datetime))) AS duration
+        FROM round
+        WHERE round.game_mode IS NOT NULL
+        AND round.game_mode != 'undefined'
+        AND round.game_mode_result IS NOT NULL
+        AND round.game_mode_result != 'undefined'
+        AND round.initialize_datetime BETWEEN ? AND ?
+        AND round.shutdown_datetime IS NOT NULL
+        GROUP BY round.game_mode, round.game_mode_result
+        ORDER BY round.game_mode ASC, rounds DESC;", $start, $end);
       usort($data, function($a, $b){
         return strcmp($a->game_mode, $b->game_mode);
       });

@@ -14,9 +14,9 @@ class DeathController Extends Controller{
     $this->router = $this->container->get('router');
     $this->deathModel = new Death($this->container->get('settings')['statbus']);
 
-    $this->pages = ceil($this->DB->cell("SELECT count(tbl_death.id) FROM tbl_death
-        LEFT JOIN tbl_round ON tbl_round.id = tbl_death.round_id
-        WHERE tbl_round.end_datetime IS NOT NULL") / $this->per_page);
+    $this->pages = ceil($this->DB->cell("SELECT count(death.id) FROM death
+        LEFT JOIN round ON round.id = death.round_id
+        WHERE round.end_datetime IS NOT NULL") / $this->per_page);
 
     $this->breadcrumbs['Deaths'] = $this->router->pathFor('death.index');
 
@@ -28,34 +28,34 @@ class DeathController Extends Controller{
       $this->page = filter_var($args['page'], FILTER_VALIDATE_INT);
     }
     $deaths = $this->DB->run("SELECT 
-        tbl_death.id,
-        tbl_death.pod,
-        tbl_death.x_coord AS x,
-        tbl_death.y_coord AS y,
-        tbl_death.z_coord AS z,
-        tbl_death.server_port AS port,
-        tbl_death.round_id AS round,
-        tbl_death.mapname,
-        tbl_death.tod,
-        tbl_death.job,
-        tbl_death.special,
-        tbl_death.name,
-        tbl_death.byondkey,
-        tbl_death.laname,
-        tbl_death.lakey,
-        tbl_death.bruteloss AS brute,
-        tbl_death.brainloss AS brain,
-        tbl_death.fireloss AS fire,
-        tbl_death.oxyloss AS oxy,
-        tbl_death.toxloss AS tox,
-        tbl_death.cloneloss AS clone,
-        tbl_death.staminaloss AS stamina,
-        tbl_death.last_words,
-        tbl_death.suicide
-        FROM tbl_death
-        LEFT JOIN tbl_round ON tbl_round.id = tbl_death.round_id
-        WHERE tbl_round.end_datetime IS NOT NULL
-        ORDER BY tbl_death.tod DESC
+        death.id,
+        death.pod,
+        death.x_coord AS x,
+        death.y_coord AS y,
+        death.z_coord AS z,
+        death.server_port AS port,
+        death.round_id AS round,
+        death.mapname,
+        death.tod,
+        death.job,
+        death.special,
+        death.name,
+        death.byondkey,
+        death.laname,
+        death.lakey,
+        death.bruteloss AS brute,
+        death.brainloss AS brain,
+        death.fireloss AS fire,
+        death.oxyloss AS oxy,
+        death.toxloss AS tox,
+        death.cloneloss AS clone,
+        death.staminaloss AS stamina,
+        death.last_words,
+        death.suicide
+        FROM death
+        LEFT JOIN round ON round.id = death.round_id
+        WHERE round.end_datetime IS NOT NULL
+        ORDER BY death.tod DESC
         LIMIT ?,?", ($this->page * $this->per_page) - $this->per_page, $this->per_page);
     foreach ($deaths as &$death){
       $death = $this->deathModel->parseDeath($death);
@@ -79,40 +79,40 @@ class DeathController Extends Controller{
       $format = filter_var($request->getQueryParams()['format'], FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
     }
     if(!$format){
-    $this->pages = ceil($this->DB->cell("SELECT count(tbl_death.id) FROM tbl_death WHERE tbl_death.round_id = ?", $round) / $this->per_page);
+    $this->pages = ceil($this->DB->cell("SELECT count(death.id) FROM death WHERE death.round_id = ?", $round) / $this->per_page);
     } else {
         $this->per_page = 1000;
     }
     $deaths = $this->DB->run("SELECT 
-        tbl_death.id,
-        tbl_death.pod,
-        tbl_death.x_coord AS x,
-        tbl_death.y_coord AS y,
-        tbl_death.z_coord AS z,
-        tbl_death.server_port AS port,
-        tbl_death.round_id AS round,
-        tbl_death.mapname,
-        tbl_death.tod,
-        tbl_death.job,
-        tbl_death.special,
-        tbl_death.name,
-        tbl_death.byondkey,
-        tbl_death.laname,
-        tbl_death.lakey,
-        tbl_death.bruteloss AS brute,
-        tbl_death.brainloss AS brain,
-        tbl_death.fireloss AS fire,
-        tbl_death.oxyloss AS oxy,
-        tbl_death.toxloss AS tox,
-        tbl_death.cloneloss AS clone,
-        tbl_death.staminaloss AS stamina,
-        tbl_death.last_words,
-        tbl_death.suicide
-        FROM tbl_death
-        LEFT JOIN tbl_round ON tbl_round.id = tbl_death.round_id
-        WHERE tbl_round.end_datetime IS NOT NULL
-        AND tbl_death.round_id = ?
-        ORDER BY tbl_death.tod DESC
+        death.id,
+        death.pod,
+        death.x_coord AS x,
+        death.y_coord AS y,
+        death.z_coord AS z,
+        death.server_port AS port,
+        death.round_id AS round,
+        death.mapname,
+        death.tod,
+        death.job,
+        death.special,
+        death.name,
+        death.byondkey,
+        death.laname,
+        death.lakey,
+        death.bruteloss AS brute,
+        death.brainloss AS brain,
+        death.fireloss AS fire,
+        death.oxyloss AS oxy,
+        death.toxloss AS tox,
+        death.cloneloss AS clone,
+        death.staminaloss AS stamina,
+        death.last_words,
+        death.suicide
+        FROM death
+        LEFT JOIN round ON round.id = death.round_id
+        WHERE round.end_datetime IS NOT NULL
+        AND death.round_id = ?
+        ORDER BY death.tod DESC
         LIMIT ?,?", 
           $round,
           ($this->page * $this->per_page) - $this->per_page,
@@ -143,34 +143,34 @@ class DeathController Extends Controller{
   public function single($request, $response, $args) {
     $id = filter_var($args['id'],FILTER_VALIDATE_INT);
     $death = $this->DB->row("SELECT 
-        tbl_death.id,
-        tbl_death.pod,
-        tbl_death.x_coord AS x,
-        tbl_death.y_coord AS y,
-        tbl_death.z_coord AS z,
-        tbl_death.server_port AS port,
-        tbl_death.round_id AS round,
-        tbl_death.mapname,
-        tbl_death.tod,
-        tbl_death.job,
-        tbl_death.special,
-        tbl_death.name,
-        tbl_death.byondkey,
-        tbl_death.laname,
-        tbl_death.lakey,
-        tbl_death.bruteloss AS brute,
-        tbl_death.brainloss AS brain,
-        tbl_death.fireloss AS fire,
-        tbl_death.oxyloss AS oxy,
-        tbl_death.toxloss AS tox,
-        tbl_death.cloneloss AS clone,
-        tbl_death.staminaloss AS stamina,
-        tbl_death.last_words,
-        tbl_death.suicide
-        FROM tbl_death
-        LEFT JOIN tbl_round ON tbl_round.id = tbl_death.round_id
-        WHERE tbl_round.shutdown_datetime IS NOT NULL
-        AND tbl_death.id = ?", $id);
+        death.id,
+        death.pod,
+        death.x_coord AS x,
+        death.y_coord AS y,
+        death.z_coord AS z,
+        death.server_port AS port,
+        death.round_id AS round,
+        death.mapname,
+        death.tod,
+        death.job,
+        death.special,
+        death.name,
+        death.byondkey,
+        death.laname,
+        death.lakey,
+        death.bruteloss AS brute,
+        death.brainloss AS brain,
+        death.fireloss AS fire,
+        death.oxyloss AS oxy,
+        death.toxloss AS tox,
+        death.cloneloss AS clone,
+        death.staminaloss AS stamina,
+        death.last_words,
+        death.suicide
+        FROM death
+        LEFT JOIN round ON round.id = death.round_id
+        WHERE round.shutdown_datetime IS NOT NULL
+        AND death.id = ?", $id);
     $death = $this->deathModel->parseDeath($death);
     $url = parent::getFullURL($this->router->pathFor('death.single',['id'=>$death->id]));
     $this->breadcrumbs[$death->id] = $url;
@@ -194,13 +194,13 @@ class DeathController Extends Controller{
 
   public function lastWords($request, $response, $args) {
     $deaths = $this->DB->run("SELECT 
-        tbl_death.id,
-        tbl_death.last_words
-        FROM tbl_death
-        LEFT JOIN tbl_round ON tbl_round.id = tbl_death.round_id
-        WHERE tbl_death.last_words IS NOT NULL
-        AND tbl_round.end_datetime IS NOT NULL
-        GROUP BY tbl_death.last_words
+        death.id,
+        death.last_words
+        FROM death
+        LEFT JOIN round ON round.id = death.round_id
+        WHERE death.last_words IS NOT NULL
+        AND round.end_datetime IS NOT NULL
+        GROUP BY death.last_words
         ORDER BY RAND()
         LIMIT 0, 1000");
     $this->breadcrumbs['Last Words'] = $this->router->pathFor('death.lastwords');
@@ -212,24 +212,24 @@ class DeathController Extends Controller{
 
   public function deathMap($round){
     $deaths = $this->DB->run("SELECT 
-        tbl_death.id,
-        tbl_death.pod,
-        tbl_death.x_coord AS x,
-        tbl_death.y_coord AS y,
-        tbl_death.tod,
-        tbl_death.job,
-        tbl_death.special,
-        tbl_death.name,
-        tbl_death.byondkey,
-        tbl_death.laname,
-        tbl_death.lakey,
-        tbl_death.suicide
-        FROM tbl_death
-        LEFT JOIN tbl_round ON tbl_round.id = tbl_death.round_id
-        WHERE tbl_round.end_datetime IS NOT NULL
-        AND tbl_death.z_coord = 2
-        AND tbl_death.round_id = ?
-        ORDER BY tbl_death.tod DESC", $round);
+        death.id,
+        death.pod,
+        death.x_coord AS x,
+        death.y_coord AS y,
+        death.tod,
+        death.job,
+        death.special,
+        death.name,
+        death.byondkey,
+        death.laname,
+        death.lakey,
+        death.suicide
+        FROM death
+        LEFT JOIN round ON round.id = death.round_id
+        WHERE round.end_datetime IS NOT NULL
+        AND death.z_coord = 2
+        AND death.round_id = ?
+        ORDER BY death.tod DESC", $round);
     return json_encode($deaths);
   }
 }

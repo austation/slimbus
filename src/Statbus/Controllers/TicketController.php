@@ -14,8 +14,8 @@ class TicketController extends Controller {
     $this->settings = $this->container->get('settings')['statbus'];
     $this->tm = new Ticket($this->settings);
     $this->pm = new Player($this->settings);
-    // $this->pages = ceil($this->DB->cell("SELECT count(tbl_messages.id) FROM tbl_messages WHERE tbl_messages.deleted = 0
-    //   AND (tbl_messages.expire_timestamp > NOW() OR tbl_messages.expire_timestamp IS NULL)") / $this->per_page);
+    // $this->pages = ceil($this->DB->cell("SELECT count(messages.id) FROM messages WHERE messages.deleted = 0
+    //   AND (messages.expire_timestamp > NOW() OR messages.expire_timestamp IS NULL)") / $this->per_page);
     $this->url = $this->router->pathFor('ticket.index');
     $this->path = 'ticket.single';
     $this->permaLink = 'ticket.single';
@@ -23,9 +23,9 @@ class TicketController extends Controller {
 
   public function getActiveTickets(){
     $this->pages = ceil($this->DB->cell("SELECT
-      count(tbl_ticket.id) 
-      FROM tbl_ticket 
-      WHERE tbl_ticket.action = 'Ticket Opened';") / $this->per_page);
+      count(ticket.id) 
+      FROM ticket 
+      WHERE ticket.action = 'Ticket Opened';") / $this->per_page);
     $tickets = $this->DB->run("
       SELECT 
         t.server_ip,
@@ -39,9 +39,9 @@ class TicketController extends Controller {
         t.sender as sender_ckey,
         'player' as r_rank,
         'player' as s_rank,
-        (SELECT `action` FROM tbl_ticket WHERE t.ticket = ticket AND t.round_id = round_id ORDER BY id DESC LIMIT 1) as `status`,
-        (SELECT COUNT(id) FROM tbl_ticket WHERE t.ticket = ticket AND t.round_id = round_id) as `replies`
-      FROM tbl_ticket t
+        (SELECT `action` FROM ticket WHERE t.ticket = ticket AND t.round_id = round_id ORDER BY id DESC LIMIT 1) as `status`,
+        (SELECT COUNT(id) FROM ticket WHERE t.ticket = ticket AND t.round_id = round_id) as `replies`
+      FROM ticket t
       WHERE t.action = 'Ticket Opened' 
       GROUP BY t.id
       ORDER BY `timestamp` DESC
@@ -77,11 +77,11 @@ class TicketController extends Controller {
         t.sender as sender_ckey,
         r.rank as r_rank,
         s.rank as s_rank,
-        (SELECT `action` FROM tbl_ticket WHERE t.ticket = ticket AND t.round_id = round_id ORDER BY id DESC LIMIT 1) as `status`,
-        (SELECT COUNT(id) FROM tbl_ticket WHERE t.ticket = ticket AND t.round_id = round_id) as `replies`
-      FROM tbl_ticket t
-      LEFT JOIN tbl_admin AS r ON r.ckey = t.recipient
-      LEFT JOIN tbl_admin AS s ON s.ckey = t.sender
+        (SELECT `action` FROM ticket WHERE t.ticket = ticket AND t.round_id = round_id ORDER BY id DESC LIMIT 1) as `status`,
+        (SELECT COUNT(id) FROM ticket WHERE t.ticket = ticket AND t.round_id = round_id) as `replies`
+      FROM ticket t
+      LEFT JOIN admin AS r ON r.ckey = t.recipient
+      LEFT JOIN admin AS s ON s.ckey = t.sender
       WHERE t.round_id = ?
       AND t.action = 'Ticket Opened'
       ORDER BY `timestamp` ASC;", $round);
@@ -117,9 +117,9 @@ class TicketController extends Controller {
         t.sender as sender_ckey,
         r.rank as r_rank,
         s.rank as s_rank
-      FROM tbl_ticket t
-      LEFT JOIN tbl_admin AS r ON r.ckey = t.recipient
-      LEFT JOIN tbl_admin AS s ON s.ckey = t.sender
+      FROM ticket t
+      LEFT JOIN admin AS r ON r.ckey = t.recipient
+      LEFT JOIN admin AS s ON s.ckey = t.sender
       WHERE t.round_id = ?
       AND t.ticket = ? 
       ORDER BY `timestamp` ASC;", $round, $ticket);
@@ -142,7 +142,7 @@ class TicketController extends Controller {
   public function getTicketsForCkey(string $ckey) {
     $this->pages = ceil($this->DB->cell("SELECT
       count(t.id) 
-      FROM tbl_ticket t
+      FROM ticket t
       WHERE t.action = 'Ticket Opened' AND (t.recipient = ? OR t.sender = ?);", $ckey, $ckey) / $this->per_page);
     $tickets = $this->DB->run("SELECT 
         t.server_ip,
@@ -156,9 +156,9 @@ class TicketController extends Controller {
         t.sender as sender_ckey,
         'player' as r_rank,
         'player' as s_rank,
-        (SELECT `action` FROM tbl_ticket WHERE t.ticket = ticket AND t.round_id = round_id ORDER BY id DESC LIMIT 1) as `status`,
-        (SELECT COUNT(id) FROM tbl_ticket WHERE t.ticket = ticket AND t.round_id = round_id) as `replies`
-      FROM tbl_ticket t
+        (SELECT `action` FROM ticket WHERE t.ticket = ticket AND t.round_id = round_id ORDER BY id DESC LIMIT 1) as `status`,
+        (SELECT COUNT(id) FROM ticket WHERE t.ticket = ticket AND t.round_id = round_id) as `replies`
+      FROM ticket t
       WHERE t.action = 'Ticket Opened'
       AND (t.recipient = ? OR t.sender = ?)
       GROUP BY t.id
@@ -270,7 +270,7 @@ class TicketController extends Controller {
   }
 
   private function getFullTicketFromID($id){
-    return($this->DB->row("SELECT round_id, ticket FROM tbl_ticket WHERE id = ?", $id));
+    return($this->DB->row("SELECT round_id, ticket FROM ticket WHERE id = ?", $id));
   }
 
   private function getTicketIDFromIdentifier($identifier) {

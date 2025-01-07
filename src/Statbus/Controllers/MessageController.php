@@ -12,8 +12,8 @@ class MessageController extends Controller {
     parent::__construct($container);
     $this->messageModel = new Message($this->container->get('settings')['statbus']);
     $this->pm = new Player($this->container->get('settings')['statbus']);
-    $this->pages = ceil($this->DB->cell("SELECT count(tbl_messages.id) FROM tbl_messages WHERE tbl_messages.deleted = 0
-      AND (tbl_messages.expire_timestamp > NOW() OR tbl_messages.expire_timestamp IS NULL)") / $this->per_page);
+    $this->pages = ceil($this->DB->cell("SELECT count(messages.id) FROM messages WHERE messages.deleted = 0
+      AND (messages.expire_timestamp > NOW() OR messages.expire_timestamp IS NULL)") / $this->per_page);
     $this->url = $this->router->pathFor('message.index');
   }
 
@@ -29,8 +29,8 @@ class MessageController extends Controller {
       M.server_port AS port,
       M.lasteditor,
       A.rank as adminrank
-      FROM tbl_messages AS M
-      LEFT JOIN tbl_admin AS A ON M.adminckey = A.ckey
+      FROM messages AS M
+      LEFT JOIN admin AS A ON M.adminckey = A.ckey
 
       WHERE M.deleted = 0
       AND M.type = 'memo'
@@ -66,10 +66,10 @@ class MessageController extends Controller {
       A.rank as adminrank,
       T.rank as targetrank,
       E.rank as editorrank
-      FROM tbl_messages AS M
-      LEFT JOIN tbl_admin AS A ON M.adminckey = A.ckey
-      LEFT JOIN tbl_admin AS T ON M.targetckey = T.ckey
-      LEFT JOIN tbl_admin AS E ON M.lasteditor = E.ckey
+      FROM messages AS M
+      LEFT JOIN admin AS A ON M.adminckey = A.ckey
+      LEFT JOIN admin AS T ON M.targetckey = T.ckey
+      LEFT JOIN admin AS E ON M.lasteditor = E.ckey
       WHERE M.deleted = 0
       AND (M.expire_timestamp > NOW() OR M.expire_timestamp IS NULL)
       ORDER BY M.timestamp DESC
@@ -103,7 +103,7 @@ class MessageController extends Controller {
       $secret = "AND M.SECRET = 0";
     }
     $this->page = filter_var($page, FILTER_VALIDATE_INT);
-    $this->pages = ceil($this->DB->cell("SELECT count(M.id) FROM tbl_messages M WHERE M.deleted = 0
+    $this->pages = ceil($this->DB->cell("SELECT count(M.id) FROM messages M WHERE M.deleted = 0
       AND (M.expire_timestamp > NOW() OR M.expire_timestamp IS NULL)
       AND M.targetckey = ?
       $secret", $ckey) / $this->per_page);
@@ -125,10 +125,10 @@ class MessageController extends Controller {
       A.rank as adminrank,
       T.rank as targetrank,
       E.rank as editorrank
-      FROM tbl_messages AS M
-      LEFT JOIN tbl_admin AS A ON M.adminckey = A.ckey
-      LEFT JOIN tbl_admin AS T ON M.targetckey = T.ckey
-      LEFT JOIN tbl_admin AS E ON M.lasteditor = E.ckey
+      FROM messages AS M
+      LEFT JOIN admin AS A ON M.adminckey = A.ckey
+      LEFT JOIN admin AS T ON M.targetckey = T.ckey
+      LEFT JOIN admin AS E ON M.lasteditor = E.ckey
       WHERE M.deleted = 0
       AND (M.expire_timestamp > NOW() OR M.expire_timestamp IS NULL)
       AND M.targetckey = ?
@@ -177,10 +177,10 @@ class MessageController extends Controller {
       A.rank as adminrank,
       T.rank as targetrank,
       E.rank as editorrank
-      FROM tbl_messages AS M
-      LEFT JOIN tbl_admin AS A ON M.adminckey = A.ckey
-      LEFT JOIN tbl_admin AS T ON M.targetckey = T.ckey
-      LEFT JOIN tbl_admin AS E ON M.lasteditor = E.ckey
+      FROM messages AS M
+      LEFT JOIN admin AS A ON M.adminckey = A.ckey
+      LEFT JOIN admin AS T ON M.targetckey = T.ckey
+      LEFT JOIN admin AS E ON M.lasteditor = E.ckey
       WHERE M.id = ?
       ORDER BY M.timestamp DESC", $id);
     $message = $this->messageModel->parseMessage($message);

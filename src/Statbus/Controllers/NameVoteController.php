@@ -78,7 +78,7 @@ class NameVoteController Extends Controller {
 
   public function getName(){
     $name = $this->DB->row("SELECT DISTINCT `name`, job
-    FROM tbl_death
+    FROM death
     WHERE YEAR(`tod`) = 2018 AND `job` IN ('Assistant', 'Atmospheric Technician', 'Bartender', 'Botanist', 'Captain', 'Cargo Technician', 'Chaplain', 'Chemist', 'Chief Engineer', 'Chief Medical Officer', 'Cook', 'Curator', 'Detective', 'Geneticist', 'Head of Personnel', 'Head of Security', 'Janitor', 'Lawyer', 'Librarian', 'Medical Doctor', 'Quartermaster', 'Research Director', 'Roboticist', 'Scientist', 'Security Officer', 'Shaft Miner', 'Station Engineer', 'Virologist', 'Warden')
     ORDER BY RAND()
     LIMIT 0,1;");

@@ -46,14 +46,14 @@ class UserController Extends Controller {
       $this->user->rank = 'Player';
       return;
     }
-    $this->user->rank = $this->DB->row("SELECT tbl_admin.rank,
-      tbl_admin.feedback,
-      tbl_admin_ranks.flags,
-      tbl_admin_ranks.exclude_flags,
-      tbl_admin_ranks.can_edit_flags
-      FROM tbl_admin
-      LEFT JOIN tbl_admin_ranks ON tbl_admin.rank = tbl_admin_ranks.rank
-      WHERE tbl_admin.ckey = ?", $this->user->ckey);
+    $this->user->rank = $this->DB->row("SELECT admin.rank,
+      admin.feedback,
+      admin_ranks.flags,
+      admin_ranks.exclude_flags,
+      admin_ranks.can_edit_flags
+      FROM admin
+      LEFT JOIN admin_ranks ON admin.rank = admin_ranks.rank
+      WHERE admin.ckey = ?", $this->user->ckey);
     if(!$this->user->rank){
       $this->user->rank = 'Player';
       return;
@@ -96,7 +96,7 @@ class UserController Extends Controller {
     $feedback = filter_var($request->getParam('feedback'), FILTER_VALIDATE_URL);
     if($feedback){
       try{
-        $this->DB->update('tbl_admin',[
+        $this->DB->update('admin',[
           'feedback' => $feedback
         ],[
           'ckey' => $this->user->ckey
